@@ -51,10 +51,9 @@ export function Header({ locale, dict }: HeaderProps) {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-lg border border-border p-0.5">
             {locales.map((l) => (
-              <Link
+              <a
                 key={l}
                 href={`/api/locale?locale=${l}&redirect=${encodeURIComponent(replacePathLocale(pathname, l))}`}
-                prefetch={false}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   locale === l
                     ? "bg-foreground text-background"
@@ -63,7 +62,7 @@ export function Header({ locale, dict }: HeaderProps) {
                 aria-current={locale === l ? "page" : undefined}
               >
                 {localeLabels[l]}
-              </Link>
+              </a>
             ))}
           </div>
           <Button
