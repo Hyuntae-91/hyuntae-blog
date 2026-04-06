@@ -1,0 +1,43 @@
+{
+  "common": {
+    "emptyPosts": "No posts yet."
+  },
+  "nav": {
+    "blog": "Blog",
+    "about": "About"
+  },
+  "home": {
+    "latestPost": "Latest",
+    "allPosts": "All Posts",
+    "readMore": "Read more"
+  },
+  "post": {
+    "original": "Original",
+    "available": "Available",
+    "comingSoon": "Coming soon",
+    "minRead": "min read",
+    "contents": "Contents",
+    "relatedPosts": "Related Posts",
+    "dateLabel": "Date",
+    "categoryLabel": "Category",
+    "tagsLabel": "Tags",
+    "languagesLabel": "Languages"
+  },
+  "about": {
+    "title": "About",
+    "skills": "Skills",
+    "roleSummary": "Backend Developer · 5 years",
+    "languagesTitle": "Languages",
+    "skillGroups": {
+      "languages": "Languages",
+      "frameworks": "Frameworks",
+      "infrastructure": "Infrastructure",
+      "data": "Data"
+    }
+  },
+  "translationStatus": {
+    "original": "Original: {lang}",
+    "available": "{lang}",
+    "comingSoon": "{lang} coming soon"
+  }
+}
