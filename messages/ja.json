@@ -21,7 +21,12 @@
     "dateLabel": "日付",
     "categoryLabel": "カテゴリ",
     "tagsLabel": "タグ",
-    "languagesLabel": "言語"
+    "languagesLabel": "言語",
+    "viewsLabel": "閲覧수"
+  },
+  "stats": {
+    "todayVisitors": "今日の訪問者",
+    "totalVisitors": "累計訪問者"
   },
   "about": {
     "title": "紹介",

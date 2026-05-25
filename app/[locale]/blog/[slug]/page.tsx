@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TranslationPendingModal } from "@/components/translation-pending-modal";
 import { mdxComponents } from "@/components/mdx-components";
+import { ViewCounter } from "@/components/view-counter";
 import { SITE_URL } from "@/lib/constants";
 
 const langNames: Record<string, Record<Locale, string>> = {
@@ -127,6 +128,14 @@ export default async function PostPage({
               </h4>
               <p className="text-sm">{meta.date}</p>
             </div>
+            <div>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {dict.post.viewsLabel ?? "조회수"}
+              </h4>
+              <div className="pt-0.5">
+                <ViewCounter slug={slug} label={dict.post.viewsLabel ?? "조회수"} increment={true} />
+              </div>
+            </div>
             {meta.category && (
               <div>
                 <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -161,15 +170,29 @@ export default async function PostPage({
                     <div key={l} className="flex items-center gap-2 text-sm">
                       <span>{langNames[locale]?.[l] ?? l}</span>
                       {isOriginal ? (
-                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-[10px]">
-                          {dict.post.original}
-                        </Badge>
+                        l === locale ? (
+                          <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-[10px]">
+                            {dict.post.original}
+                          </Badge>
+                        ) : (
+                          <Link href={`/${l}/blog/${slug}`}>
+                            <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-[10px] cursor-pointer">
+                              {dict.post.original}
+                            </Badge>
+                          </Link>
+                        )
                       ) : available ? (
-                        <Link href={`/${l}/blog/${slug}`}>
-                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-[10px] cursor-pointer">
+                        l === locale ? (
+                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-[10px]">
                             {dict.post.available}
                           </Badge>
-                        </Link>
+                        ) : (
+                          <Link href={`/${l}/blog/${slug}`}>
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-[10px] cursor-pointer">
+                              {dict.post.available}
+                            </Badge>
+                          </Link>
+                        )
                       ) : (
                         <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 text-[10px]">
                           {comingSoonLabels[l]}
@@ -209,15 +232,29 @@ export default async function PostPage({
               const available = meta.availableLocales.includes(l);
               const isOriginal = l === meta.originalLang;
               return isOriginal ? (
-                <Badge key={l} className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-xs">
-                  {dict.post.original}: {langNames[locale]?.[l]}
-                </Badge>
+                l === locale ? (
+                  <Badge key={l} className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-xs">
+                    {dict.post.original}: {langNames[locale]?.[l]}
+                  </Badge>
+                ) : (
+                  <Link key={l} href={`/${l}/blog/${slug}`}>
+                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-xs cursor-pointer">
+                      {dict.post.original}: {langNames[locale]?.[l]}
+                    </Badge>
+                  </Link>
+                )
               ) : available ? (
-                <Link key={l} href={`/${l}/blog/${slug}`}>
-                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs cursor-pointer">
+                l === locale ? (
+                  <Badge key={l} className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">
                     {langNames[locale]?.[l]}
                   </Badge>
-                </Link>
+                ) : (
+                  <Link key={l} href={`/${l}/blog/${slug}`}>
+                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs cursor-pointer">
+                      {langNames[locale]?.[l]}
+                    </Badge>
+                  </Link>
+                )
               ) : (
                 <Badge key={l} className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 text-xs">
                   {langNames[locale]?.[l]} — {comingSoonLabels[l]}
@@ -231,9 +268,11 @@ export default async function PostPage({
           </h1>
 
           {/* Mobile: meta */}
-          <div className="mb-6 flex items-center gap-3 text-sm text-muted-foreground lg:hidden">
+          <div className="mb-6 flex flex-wrap items-center gap-3 text-sm text-muted-foreground lg:hidden">
             <span>{meta.date}</span>
             {meta.category && <Badge variant="secondary">{meta.category}</Badge>}
+            <span className="text-muted-foreground/30">|</span>
+            <ViewCounter slug={slug} label={dict.post.viewsLabel ?? "조회수"} increment={false} />
           </div>
 
           <Separator className="mb-8" />

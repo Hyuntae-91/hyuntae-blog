@@ -21,7 +21,12 @@
     "dateLabel": "작성일",
     "categoryLabel": "카테고리",
     "tagsLabel": "태그",
-    "languagesLabel": "언어"
+    "languagesLabel": "언어",
+    "viewsLabel": "조회수"
+  },
+  "stats": {
+    "todayVisitors": "오늘 방문자",
+    "totalVisitors": "누적 방문자"
   },
   "about": {
     "title": "소개",

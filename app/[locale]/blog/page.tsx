@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale, locales } from "@/lib/i18n";
 import { getAllPosts } from "@/lib/posts";
-import { Badge } from "@/components/ui/badge";
+import { PostList } from "@/components/post-list";
 import { SITE_URL } from "@/lib/constants";
 
 export async function generateMetadata({
@@ -42,30 +41,7 @@ export default async function BlogPage({
       {posts.length === 0 && (
         <p className="text-muted-foreground">{dict.common.emptyPosts}</p>
       )}
-      <div className="space-y-1">
-        {posts.map((post) => (
-          <Link
-            key={post.slug}
-            href={`/${post.hrefLocale}/blog/${post.slug}`}
-            className="flex items-center justify-between rounded-lg px-3 py-4 transition-colors hover:bg-accent"
-          >
-            <div className="flex items-center gap-3">
-              {post.category && (
-                <Badge variant="secondary" className="text-xs">
-                  {post.category}
-                </Badge>
-              )}
-              {!post.isTranslationAvailable && (
-                <Badge variant="outline" className="text-xs">
-                  {dict.post.original}: {post.sourceLocale.toUpperCase()}
-                </Badge>
-              )}
-              <span className="font-medium">{post.title}</span>
-            </div>
-            <span className="text-sm text-muted-foreground">{post.date}</span>
-          </Link>
-        ))}
-      </div>
+      <PostList posts={posts} dict={dict} />
     </div>
   );
 }

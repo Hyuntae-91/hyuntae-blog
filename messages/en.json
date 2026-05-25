@@ -21,7 +21,12 @@
     "dateLabel": "Date",
     "categoryLabel": "Category",
     "tagsLabel": "Tags",
-    "languagesLabel": "Languages"
+    "languagesLabel": "Languages",
+    "viewsLabel": "Views"
+  },
+  "stats": {
+    "todayVisitors": "Today's Visitors",
+    "totalVisitors": "Total Visitors"
   },
   "about": {
     "title": "About",

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
-import { locales, type Locale, replacePathLocale } from "@/lib/locale-helpers";
+import { locales, type Locale, replacePathLocale, COOKIE_NAME } from "@/lib/locale-helpers";
 
 const localeLabels: Record<Locale, string> = { ko: "KO", en: "EN", ja: "JA" };
 
@@ -51,9 +51,12 @@ export function Header({ locale, dict }: HeaderProps) {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-lg border border-border p-0.5">
             {locales.map((l) => (
-              <a
+              <Link
                 key={l}
-                href={`/api/locale?locale=${l}&redirect=${encodeURIComponent(replacePathLocale(pathname, l))}`}
+                href={replacePathLocale(pathname, l)}
+                onClick={() => {
+                  document.cookie = `${COOKIE_NAME}=${l}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+                }}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   locale === l
                     ? "bg-foreground text-background"
@@ -62,7 +65,7 @@ export function Header({ locale, dict }: HeaderProps) {
                 aria-current={locale === l ? "page" : undefined}
               >
                 {localeLabels[l]}
-              </a>
+              </Link>
             ))}
           </div>
           <Button

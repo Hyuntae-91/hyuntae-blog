@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import { Geist, Geist_Mono, Noto_Sans_JP, Noto_Sans_KR } from "next/font/google";
 import { getDictionary, hasLocale, locales } from "@/lib/i18n";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/header";
-import { getLocaleFontClass } from "@/lib/locale-helpers";
+import { Footer } from "@/components/footer";
+import { getLocaleFontClass, type Locale } from "@/lib/locale-helpers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,10 +52,27 @@ export default async function LocaleLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${notoSansJp.variable} ${notoSansKr.variable} ${getLocaleFontClass(locale)} antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background text-foreground">
+      <body className="min-h-screen bg-background text-foreground flex flex-col">
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
         <ThemeProvider>
-          <Header locale={locale} dict={dict} />
-          <main>{children}</main>
+          <Header locale={locale as Locale} dict={dict} />
+          <main className="flex-grow">{children}</main>
+          <Footer locale={locale as Locale} dict={dict} />
         </ThemeProvider>
       </body>
     </html>
