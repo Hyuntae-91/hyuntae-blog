@@ -28,8 +28,16 @@ export function ViewCounter({
   }, [initialViews]);
 
   useEffect(() => {
-    if (!increment) {
-      // If not incrementing and initialViews is not provided, fetch current views
+    const storageKey = `viewed_post_${slug}`;
+    const lastViewed = localStorage.getItem(storageKey);
+    const now = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000; // 24 hours
+
+    const shouldIncrement =
+      increment && (!lastViewed || now - Number(lastViewed) >= ONE_DAY);
+
+    if (!shouldIncrement) {
+      // If we shouldn't increment, just fetch current views (GET)
       if (initialViews === undefined) {
         fetch(`/api/views/${slug}`)
           .then((res) => res.json())
@@ -52,6 +60,7 @@ export function ViewCounter({
       .then((data) => {
         if (typeof data.views === "number") {
           setViews(data.views);
+          localStorage.setItem(storageKey, String(Date.now()));
         }
       })
       .catch((err) => console.error("Error incrementing views:", err));
