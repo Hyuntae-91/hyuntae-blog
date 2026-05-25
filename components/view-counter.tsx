@@ -38,16 +38,14 @@ export function ViewCounter({
 
     if (!shouldIncrement) {
       // If we shouldn't increment, just fetch current views (GET)
-      if (initialViews === undefined) {
-        fetch(`/api/views/${slug}`)
-          .then((res) => res.json())
-          .then((data) => {
-            if (typeof data.views === "number") {
-              setViews(data.views);
-            }
-          })
-          .catch((err) => console.error("Error fetching views:", err));
-      }
+      fetch(`/api/views/${slug}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (typeof data.views === "number") {
+            setViews(data.views);
+          }
+        })
+        .catch((err) => console.error("Error fetching views:", err));
       return;
     }
 
