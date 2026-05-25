@@ -35,6 +35,9 @@ export async function POST(request: NextRequest) {
     "127.0.0.1";
   const ip = rawIp.trim();
 
+  // Get country code from Vercel edge header
+  const country = request.headers.get("x-vercel-ip-country") || "unknown";
+
   // Hash IP address with a secret salt to preserve privacy
   const salt = process.env.IP_SALT || "default-site-salt-secret";
   const ipHash = crypto.createHash("sha256").update(ip + salt).digest("hex");
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
   // The primary key constraint prevents duplicate counting per day.
   const { error } = await supabase
     .from("site_visitors")
-    .insert({ date: todayDate, ip_hash: ipHash });
+    .insert({ date: todayDate, ip_hash: ipHash, country: country });
 
   // Code '23505' indicates duplicate key (IP already registered today), which we safely ignore
   if (error && error.code !== "23505") {
