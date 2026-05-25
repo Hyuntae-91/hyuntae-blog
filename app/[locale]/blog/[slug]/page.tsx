@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { TranslationPendingModal } from "@/components/translation-pending-modal";
 import { mdxComponents } from "@/components/mdx-components";
 import { ViewCounter } from "@/components/view-counter";
+import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/constants";
 
 const langNames: Record<string, Record<Locale, string>> = {
@@ -100,6 +101,18 @@ export default async function PostPage({
   const dict = await getDictionary(locale);
   const { meta, content } = post;
 
+  let initialViews = 0;
+  if (supabase) {
+    const { data } = await supabase
+      .from("page_views")
+      .select("views")
+      .eq("slug", slug)
+      .single();
+    if (data) {
+      initialViews = Number(data.views);
+    }
+  }
+
   const { content: mdxContent } = await compileMDX({
     source: content,
     components: mdxComponents,
@@ -133,7 +146,7 @@ export default async function PostPage({
                 {dict.post.viewsLabel ?? "조회수"}
               </h4>
               <div className="pt-0.5">
-                <ViewCounter slug={slug} label={dict.post.viewsLabel ?? "조회수"} increment={true} />
+                <ViewCounter slug={slug} label={dict.post.viewsLabel ?? "조회수"} increment={true} initialViews={initialViews} />
               </div>
             </div>
             {meta.category && (
@@ -272,7 +285,7 @@ export default async function PostPage({
             <span>{meta.date}</span>
             {meta.category && <Badge variant="secondary">{meta.category}</Badge>}
             <span className="text-muted-foreground/30">|</span>
-            <ViewCounter slug={slug} label={dict.post.viewsLabel ?? "조회수"} increment={false} />
+            <ViewCounter slug={slug} label={dict.post.viewsLabel ?? "조회수"} increment={false} initialViews={initialViews} />
           </div>
 
           <Separator className="mb-8" />

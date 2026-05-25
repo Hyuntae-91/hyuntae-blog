@@ -9,10 +9,17 @@ import { type PostMeta } from "@/lib/posts";
 interface PostListProps {
   posts: PostMeta[];
   dict: any;
+  initialViews?: Record<string, number>;
 }
 
-export function PostList({ posts, dict }: PostListProps) {
-  const [viewsMap, setViewsMap] = useState<Record<string, number>>({});
+export function PostList({ posts, dict, initialViews = {} }: PostListProps) {
+  const [viewsMap, setViewsMap] = useState<Record<string, number>>(initialViews);
+
+  useEffect(() => {
+    if (initialViews && Object.keys(initialViews).length > 0) {
+      setViewsMap(initialViews);
+    }
+  }, [initialViews]);
 
   useEffect(() => {
     fetch("/api/views")
