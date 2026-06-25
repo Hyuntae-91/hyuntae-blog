@@ -1,0 +1,214 @@
+---
+title: "When Map Requests Piled Up, the Connection Pool Dried Out — From lat/lng B-tree to MySQL SPATIAL Index"
+date: "2026-06-25"
+originalLang: ko
+tags: ["MySQL", "Spatial Index", "SRID", "Connection Pool", "Performance"]
+category: "Backend"
+description: "A map viewport query backed by a lat/lng B-tree drained our connection pool. Here's how MySQL POINT + SPATIAL index fixed it — including the /*!80003 SRID 0 */ trap, SRID 0 vs 4326 axis order, map-API coordinate conventions, and the lesson of 'show it with numbers.'"
+---
+
+On a map-based service, QA reported that **rapidly swiping the map — zooming and panning in quick succession — would intermittently throw a "network error."** One or two requests in isolation were fine. The problem only surfaced **when requests stacked up within a short window.** It looked like a frontend network issue, but tracing it back revealed the real culprit: **a spatial query backed by a lat/lng B-tree, which exhausted the connection pool once those queries started accumulating concurrently.** The fix was MySQL `POINT` + `SPATIAL INDEX`. Here are the traps I ran into along the way.
+
+---
+
+## 1. The Symptom — How a Slow Query Disguises Itself as a Network Error
+
+The critical detail: **one or two requests were fine.** A single slow query doesn't cause an outage on its own. The map fires a query API call every time the visible bounding box changes, and **rapid zoom/pan floods those calls into a short window.** Each request ties up a connection for the duration of a slow query (up to 6s), so **the moment requests arrive faster than they complete, concurrent usage blows past the pool size.** Here's what that looked like:
+
+```
+HikariPool-x - Connection is not available, request timed out after 30000ms
+(total=4, active=4, idle=0, waiting=N)
+```
+
+```
+Slow query (up to 6s) holds a connection for a long time
+   + rapid zoom/pan piles up requests in a short window
+   → concurrent connections in use > pool size (4)
+   → pool exhausted; waiting requests time out after 30s
+   → frontend "network error" popup
+```
+
+**Lesson 0:** The pool doesn't drain from a single slow request — it drains from **"slow request × concurrency."** A handful is survivable; pile them up in a short window and the pool collapses. The frontend "network error" is the last symptom in a chain — don't trust the surface message, trace the cascade backward.
+
+## 2. First Response — A HikariCP Config Bug (Symptom Relief)
+
+The first thing I checked was the pool config, and there was a bug staring right at me. `maxLifetime`/`keepaliveTime` were **declared in the properties class but never actually wired into `HikariConfig`**, so the default was kicking in — a way-too-short 30 seconds.
+
+```java
+// ❌ Declared, but the set call on HikariConfig was missing
+private long maxLifeTime = 30000; // and 30s is far too short
+
+// ✅ Fix
+hikariConfig.setMaxLifetime(property.getMaxLifeTime());     // 30 min
+hikariConfig.setKeepaliveTime(property.getKeepaliveTime()); // 5 min
+```
+
+Fixing this eased the symptoms. **But the root cause — slow queries tying up connections — was completely untouched.** Pool tuning is just a painkiller.
+
+## 3. Root Cause — Don't Solve a 2D Range Query with a B-tree
+
+The offending query looked like this:
+
+```sql
+SELECT ...
+FROM places p
+LEFT JOIN place_stats s ON p.id = s.place_id
+WHERE p.center_lat BETWEEN :latSW AND :latNE   -- latitude range
+  AND p.center_lng BETWEEN :lngSW AND :lngNE   -- longitude range
+  AND p.type IN (:types)
+```
+
+A composite B-tree on `(center_lat, center_lng)` is **a poor fit for a 2D area search.** Even after narrowing by latitude, the engine still has to **scan every row within that latitude band to check longitude.** Depending on the viewport, that meant walking tens of thousands to hundreds of thousands of rows, pushing the query to 6 seconds. At ~5.4M rows, this is a time bomb waiting to go off.
+
+A B-tree is an inherently 1D structure — it simply isn't built for "find all points inside this rectangle." That's exactly what the **R-tree (spatial index)** is for.
+
+## 4. The Fix — MySQL SPATIAL Index
+
+The fix was straightforward: swap to a `POINT` column + `SPATIAL INDEX` (R-tree) and use `MBRWithin`/`MBRContains` for the containment check.
+
+```sql
+-- Find points inside the area using the R-tree
+WHERE MBRContains(
+  ST_GeomFromText('POLYGON((...bbox...))', 0),
+  p.location
+)
+```
+
+The results were dramatic. From `EXPLAIN`:
+
+```
+type=range  key=idx_location  rows≈52,000   -- 5.4M → 50K rows
+```
+
+The query went from **6s → tens of ms**. With connections released that much faster, pool exhaustion disappeared entirely.
+
+## 5. Three Dead Ends — Why the SPATIAL Index Wasn't Being Used
+
+This is where the real story starts. Even after creating the `SPATIAL INDEX`, the optimizer **stubbornly kept doing a full scan (`type: ALL`).** I hit three dead ends before figuring out why.
+
+### ① SRID 4326 + Axis-Order Mismatch
+
+I started with `SRID 4326` (WGS84). The problem: **4326 is latitude-first**, which didn't match the data already inserted as `POINT(lng, lat)`. That axis-order mismatch caused the index to be skipped entirely (5.4M-row full scan, 90s). Trying to rebuild the data in lat-first order immediately threw `latitude 126.97 out of range` — a dead giveaway that a longitude value was sitting in the latitude slot.
+
+> **A quick aside — choosing a coordinate system.** The 4326 lat-first trap above is annoying, but there's a more fundamental point: **our operation is a bbox containment check, not a geodesic distance calculation.** 4326's ellipsoidal precision doesn't change the containment result — it just adds overhead. That makes the simpler, trap-free **planar `SRID 0`** the right call here. (When you actually need real distance or radius queries, switch to 4326 or a projected CRS — see §6 for the full breakdown.)
+
+### ② Dirty Data
+
+The `lat` column had rows with a longitude value (126.x) sitting in it — dirty data from a previous import. I cleaned that up and switched to `SRID 0`. Still `type: ALL`.
+
+### ③ Missing `/*!80003 SRID 0 */` Comment ← the Real Cause
+
+This was the actual problem. **If the column definition doesn't declare an SRID attribute, MySQL will not use the SPATIAL index — period. Even `FORCE INDEX` does nothing.**
+
+```sql
+-- ❌ No SRID attribute → the index is useless
+location POINT GENERATED ALWAYS AS (...) STORED NOT NULL
+
+-- ✅ /*!80003 SRID 0 */ is required for the optimizer to recognize the index
+location POINT GENERATED ALWAYS AS (...) STORED NOT NULL /*!80003 SRID 0 */
+```
+
+> MySQL 8.0 manual: *"The optimizer can use SPATIAL indexes on SRID-restricted columns."* — the column must carry an SRID restriction.
+
+I had known about this requirement. But setting an SRID is a **once-a-year task at most** — in past environments the schema was pre-configured and I'd never had to do it myself — so the detail had faded. **Knowing something and recalling it under pressure are different things**, especially for constraints you almost never touch. That's the kind of thing that's better externalized into a checklist or a saved snippet.
+
+And this isn't just a personal oversight — it's a genuine MySQL 8.0 footgun. MySQL marks a SPATIAL index on a column with no SRID attribute as *invalid* and refuses to use it, and this is **by design** ([WL#10439](https://dev.mysql.com/worklog/task/?id=10439)): the index needs to know upfront whether it's operating in planar (SRID 0) or geographic (4326) space for bounding-box math to be correct. That's why `FORCE INDEX` does nothing — the index is literally marked *invalid*. Still, **the developer experience here is legitimately bad.** On a 5.7→8.0 upgrade, existing spatial indexes are **silently invalidated with no warning**, and "this used to be fast, why is it suddenly slow?" was common enough that MySQL published a dedicated [upgrade guide](https://dev.mysql.com/blog-archive/upgrading-spatial-indexes-to-mysql-8-0/). *(To be precise: creating a **new** index on a non-SRID column does emit a "this index will never be used" warning. But at upgrade time it stays silent, and `FORCE INDEX` is still powerless — that inconsistency is what trips people up.)*
+
+### Split the ALTER into Three Steps
+
+Bundling the SRID change and the index rebuild into a single ALTER statement throws "can't change SRID while an index exists on the column." The solution is to split it into three separate steps: **DROP → MODIFY → ADD.**
+
+```sql
+ALTER TABLE places DROP INDEX idx_location;
+ALTER TABLE places
+  MODIFY COLUMN location POINT
+    GENERATED ALWAYS AS (ST_SRID(POINT(COALESCE(center_lng,0), COALESCE(center_lat,0)), 0))
+    STORED NOT NULL /*!80003 SRID 0 */;
+ALTER TABLE places ADD SPATIAL INDEX idx_location (location);
+ANALYZE TABLE places;
+```
+
+## 6. Coordinate Systems & Axis Order — A Practical Reference
+
+### Axis Order: SRID 0 vs 4326 (the part that trips everyone up)
+
+For the same `POINT(a b)`, **whether `a` and `b` represent longitude or latitude depends entirely on the SRID.** This is the most-stepped-on landmine in spatial data.
+
+| | **SRID 0** (planar/Cartesian) | **SRID 4326** (WGS84 geographic) |
+|---|---|---|
+| Meaning | A plain X·Y plane (no geographic meaning) | Lat/lng on the actual Earth ellipsoid |
+| Axis order | X, Y — by convention X=lng, Y=lat | **latitude first, longitude second** (EPSG 4326 official axis order = MySQL default) |
+| Korean coords | `POINT(lng, lat)` → `POINT(127.0, 37.5)` | `POINT(lat, lng)` → `POINT(37.5, 127.0)` |
+| Range check | none | lat −90 to 90 / lng −180 to 180; error if out of range |
+| `ST_Distance` | Cartesian distance (unit meaningless) | **meters** (real distance) |
+
+**The key trap:** SRID 4326 is **latitude-first.** If you insert a Korean coordinate longitude-first as `POINT(127.0 37.5)`, MySQL interprets 127 as a latitude → `Latitude out of range`. That's exactly what dead end ① was.
+
+**MySQL practical notes**
+
+- The `POINT(x, y)` function creates a **SRID 0** geometry. For 4326, use `ST_SRID(POINT(...), 4326)` or `ST_GeomFromText('POINT(...)', 4326)`.
+- To use longitude-first under 4326, flip the axis order with `ST_GeomFromText(wkt, 4326, 'axis-order=long-lat')`.
+- When in doubt, pull components explicitly: for geographic points use `ST_Latitude(g)` / `ST_Longitude(g)`.
+
+**The real question isn't "Is the data WGS84?" — it's "Does this query need geodesic distance?":**
+
+- **Viewport bbox / area containment only** → **SRID 0 + `POINT(lng, lat)`** (sufficient, simple, fast, no axis trap). `MBR*` functions are bounding-box comparisons, and planar vs. geographic doesn't change the containment result.
+- **Real distance/radius ("within 500m") / area calculations** → **4326** (meters) or a **projected planar CRS.**
+
+One more thing worth addressing: is planar distance on raw lat/lng actually wrong? Yes — **treating raw lat/lng as a Cartesian plane distorts distances** (at 37.5°N in Korea, 1° of longitude ≈ 88km but 1° of latitude ≈ 111km). For accurate planar distance, use a **projected CRS** (EPSG:5179/5186 Korea TM, or Web Mercator 3857) rather than raw lat/lng. But if you're not doing distance calculations, SRID 0 is enough — don't add the complexity until you need it. This isn't "use what's familiar" — it's **choosing the right tool for the operation.**
+
+> **🐘 Aside — "PostGIS is better at spatial data" isn't about 4326.** PostGIS's advantage isn't that it defaults to a spherical CRS — it's the **`geometry` (planar) / `geography` (geodesic) type split + reprojection to any CRS via `ST_Transform` + a rich function library + GiST indexing.** PostGIS runs bbox queries on planar `geometry` too — the same philosophy as the `SRID 0` choice above. The geodesic `geography` type is for when you genuinely need real-world distance. MySQL uses a single geometry type and infers behavior from the SRID, with limited geodesic and reprojection support — that's the actual gap.
+
+### Map APIs Are Almost All WGS84 (4326) — but the Order Varies by Service
+
+This trap bites hardest when you're loading coordinates from geocoding/POI/routing APIs into your `POINT` column. The responses are almost always WGS84, but **the lat/lng order is different across services:**
+
+| Service | CRS | Order (representative API) |
+|---|---|---|
+| **Google** (Geocoding) | WGS84 | **lat,lng** (`latlng=lat,lng`) |
+| **Naver** (NCP Geocoding) | WGS84 | **lng,lat** (`lng,lat`) |
+| **Kakao** (Local REST) | WGS84 default (+TM/WTM) | **lng,lat** (`x=lng, y=lat`) |
+| **Tmap** (SK Open API) | WGS84GEO | **lng,lat** (`startX=lng, startY=lat`) |
+
+So **only Google is latitude-first; the three Korean services (Naver, Kakao, Tmap) are all longitude-first (x/startX = longitude).** Don't assume "it's WGS84, so they're all the same" — **verify the axis order for each API** and make sure it lines up with your `POINT(lng, lat)` loading convention. Get it wrong and your points silently land in the wrong place (SRID 0) or immediately blow up with `Latitude out of range` (4326).
+
+## 7. Migrating a Large Table
+
+Two approaches for safely adding a `POINT` column + `SPATIAL INDEX` to a table with millions of rows:
+
+- **Plain column** (when the app needs to write/INSERT directly): add the column as `Nullable` → **UPDATE in PK-range batches** (a single UPDATE across 5.4M rows risks ballooning the binlog/undo log and holding locks for a long time) → add `NOT NULL` constraint + index. Remember that `POINT(x, y)` means **`POINT(lng, lat)` order.**
+- **STORED generated column** (when lat/lng are never NULL and this is a read-only derived value): a single ALTER handles everything. The gotchas: `STORED` is required (`VIRTUAL` columns can't have a spatial index), and the column's SRID must match the SRID in the expression.
+
+## 8. The Index Wasn't the Whole Story — Defending on Multiple Axes
+
+At its core, this was a **multi-axis problem**, and each axis needed its own fix.
+
+1. **Query efficiency — SPATIAL index** (covered above): make the geometry filter cheap with the R-tree.
+2. **Request rate — debounce (the code existed, but wasn't running in prod)**: the frontend **already had** a debounce to coalesce rapid zoom/pan requests. Somewhere along the way — a forgotten wire-up, a rollback during some other bug fix — it had been dropped from the code path and **prod was running without it.** Requests poured in unthrottled, feeding exactly the "accumulation/concurrency" dynamic from §1. Re-enabling the debounce was part of the fix.
+
+   > Lesson: **code that exists ≠ code that's running.** Don't ask "is it implemented?" — ask "is it actually active in prod right now?"
+
+3. **Data volume — zoom-level branching on the frontend**: the wider the viewport, the more rows fall inside the bbox — **~10,000 in a single view at zoom level 14 over a large city like Seoul.** Stack a stats-table LEFT JOIN on top of that and it gets heavy fast. So **the frontend now branches by zoom level**: at zoom 14 it caps individual entries to a fixed count (prioritizing those closest to the center), and zoomed out further it switches to a **marker aggregation (count) API** rather than fetching individual records. (The backend query API has no zoom logic — that routing lives entirely on the frontend.)
+
+So the full fix spanned multiple fronts: **faster queries (index) + fewer requests (debounce) + zoom-aware call routing (frontend).** That said, **the SPATIAL index only fixed the geometry filter; properly resolving the LEFT JOIN volume (stats consolidation) is still a follow-up item.** The lesson is that this was never "add one index and call it done."
+
+## 9. Technical Summary
+
+1. **Slow query → connection-pool exhaustion → network error** is a cascade. Pool tuning is a painkiller; query optimization is the cure.
+2. A 2D area search belongs to a **SPATIAL index (R-tree)**, not a B-tree.
+3. **Without `/*!80003 SRID 0 */`, even `FORCE INDEX` is powerless** — the column must declare an explicit SRID attribute, or MySQL marks the index invalid.
+4. **4326's lat-first axis order is a trap**, and a bbox containment check doesn't need geodesic precision anyway — `SRID 0` is enough. (For real distance/radius/area, reach for 4326 or a projected CRS.)
+5. **Run the ALTER in three separate steps: DROP → MODIFY → ADD.**
+6. This was never a **single-axis** fix — query efficiency (SPATIAL index) + request rate (debounce) + wide-zoom volume (frontend routing to an aggregated marker API) all had to be addressed. And **structurally resolving the LEFT JOIN volume is still outstanding** — the index only cleaned up the geometry filter.
+
+---
+
+## Epilogue — Expertise Gets Adopted Only When You "Show It with Numbers"
+
+The technical conclusions are clean, but what's stuck with me is something less tidy.
+
+The map had been running on a **legacy lat/lng B-tree** — a design I didn't write. Location data is my domain (four years on location-based tech at a previous company), so I knew this approach would fall apart at scale. But it kept limping along, perpetually deprioritized as "good enough for now." As traffic grew, it finally broke — right at that spot, as an incident.
+
+The lesson isn't "I was right." It's that **domain expertise alone doesn't move a priority.** What actually shifts priorities isn't an opinion — it's **numbers.** If I had run a quick benchmark before the incident — "it holds up now, but at N× the current data the scan grows like this and the pool exhausts like that" — I might have prevented it entirely. Next time, in areas where I have genuine expertise, I'll lead with that one benchmark rather than a verbal warning.
+
+> This isn't a blame post. It's a note on what I'd do differently, and the sharpest thing I took away is that **"showing it with numbers in advance" beats "being right" when it comes to actually changing decisions.**
