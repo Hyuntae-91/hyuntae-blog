@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
@@ -13,29 +10,11 @@ interface PostListProps {
 }
 
 export function PostList({ posts, dict, initialViews = {} }: PostListProps) {
-  const [viewsMap, setViewsMap] = useState<Record<string, number>>(initialViews);
-
-  useEffect(() => {
-    if (initialViews && Object.keys(initialViews).length > 0) {
-      setViewsMap(initialViews);
-    }
-  }, [initialViews]);
-
-  useEffect(() => {
-    fetch("/api/views")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data) {
-          setViewsMap(data);
-        }
-      })
-      .catch((err) => console.error("Error fetching batch views:", err));
-  }, []);
-
+  // 조회수는 서버(ISR)에서 내려준 값을 그대로 사용한다. 클라이언트 재요청 없음 → 깜빡임 없음.
   return (
     <div className="space-y-1">
       {posts.map((post) => {
-        const views = viewsMap[post.slug] ?? null;
+        const views = initialViews[post.slug] ?? 0;
         return (
           <Link
             key={post.slug}
@@ -58,7 +37,7 @@ export function PostList({ posts, dict, initialViews = {} }: PostListProps) {
             <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
               <span className="inline-flex items-center gap-1">
                 <Eye className="h-3.5 w-3.5 text-muted-foreground/80" />
-                <span>{views !== null ? views.toLocaleString() : "..."}</span>
+                <span>{views.toLocaleString()}</span>
               </span>
               <span className="text-muted-foreground/30">|</span>
               <span>{post.date}</span>

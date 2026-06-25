@@ -13,6 +13,9 @@ import { ViewCounter } from "@/components/view-counter";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/constants";
 
+// 조회수를 빌드 타임에 박제하지 않고, 60초마다 백그라운드 재생성(ISR)으로 최신화한다.
+export const revalidate = 60;
+
 const langNames: Record<string, Record<Locale, string>> = {
   ko: { ko: "한국어", en: "English", ja: "日本語" },
   en: { ko: "한국어", en: "English", ja: "日本語" },

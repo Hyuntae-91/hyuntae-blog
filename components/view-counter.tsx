@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Eye } from "lucide-react";
 
 interface ViewCounterProps {
@@ -15,69 +15,36 @@ export function ViewCounter({
   slug,
   label,
   increment = false,
-  initialViews,
+  initialViews = 0,
   className = "",
 }: ViewCounterProps) {
-  const [views, setViews] = useState<number | null>(initialViews ?? null);
   const hasIncremented = useRef(false);
 
   useEffect(() => {
-    if (initialViews !== undefined) {
-      setViews(initialViews);
-    }
-  }, [initialViews]);
+    if (!increment || hasIncremented.current) return;
 
-  useEffect(() => {
     const storageKey = `viewed_post_${slug}`;
     const lastViewed = localStorage.getItem(storageKey);
     const now = Date.now();
     const ONE_DAY = 24 * 60 * 60 * 1000; // 24 hours
 
-    const shouldIncrement =
-      increment && (!lastViewed || now - Number(lastViewed) >= ONE_DAY);
+    // 같은 글을 24시간 내 다시 보면 카운트하지 않는다.
+    if (lastViewed && now - Number(lastViewed) < ONE_DAY) return;
 
-    if (!shouldIncrement) {
-      // If we shouldn't increment, just fetch current views (GET)
-      fetch(`/api/views/${slug}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (typeof data.views === "number") {
-            setViews(data.views);
-          }
-        })
-        .catch((err) => console.error("Error fetching views:", err));
-      return;
-    }
-
-    // Increment views (POST)
-    if (hasIncremented.current) return;
     hasIncremented.current = true;
 
+    // 조회수는 백그라운드에서만 증가시킨다. 화면 숫자는 서버(ISR) 값을 유지해
+    // 본인의 증가분은 다음 재생성 때 반영된다 → 1→4 같은 깜빡임 없음.
     fetch(`/api/views/${slug}`, { method: "POST" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (typeof data.views === "number") {
-          setViews(data.views);
-          localStorage.setItem(storageKey, String(Date.now()));
-        }
-      })
+      .then(() => localStorage.setItem(storageKey, String(Date.now())))
       .catch((err) => console.error("Error incrementing views:", err));
-  }, [slug, increment, initialViews]);
-
-  if (views === null) {
-    return (
-      <span className={`inline-flex items-center gap-1.5 text-xs text-muted-foreground ${className}`}>
-        <Eye className="h-3.5 w-3.5" />
-        <span>...</span>
-      </span>
-    );
-  }
+  }, [slug, increment]);
 
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs text-muted-foreground ${className}`}>
       <Eye className="h-3.5 w-3.5 text-muted-foreground/80" />
       <span>
-        {label}: {views.toLocaleString()}
+        {label}: {initialViews.toLocaleString()}
       </span>
     </span>
   );
