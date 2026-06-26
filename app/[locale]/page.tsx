@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDictionary, hasLocale, locales } from "@/lib/i18n";
+import { getDictionary, hasLocale, locales, type Locale } from "@/lib/i18n";
 import { getAllPosts } from "@/lib/posts";
 import { Badge } from "@/components/ui/badge";
+import { JsonLd } from "@/components/json-ld";
+import { buildWebSiteSchema } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/constants";
 
 export async function generateMetadata({
@@ -47,6 +49,7 @@ export default async function HomePage({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
+      <JsonLd data={buildWebSiteSchema(locale as Locale)} />
       {/* Magazine Split: Hero */}
       <div className="flex flex-col gap-8 border-b border-border pb-10 md:flex-row md:gap-12">
         {/* Left: Featured post */}

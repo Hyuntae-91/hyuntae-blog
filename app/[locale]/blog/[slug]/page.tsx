@@ -10,6 +10,11 @@ import { Separator } from "@/components/ui/separator";
 import { TranslationPendingModal } from "@/components/translation-pending-modal";
 import { mdxComponents } from "@/components/mdx-components";
 import { ViewCounter } from "@/components/view-counter";
+import { JsonLd } from "@/components/json-ld";
+import {
+  buildBlogPostingSchema,
+  buildBreadcrumbSchema,
+} from "@/lib/structured-data";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/constants";
 
@@ -133,6 +138,25 @@ export default async function PostPage({
 
   return (
     <div className="mx-auto max-w-5xl">
+      <JsonLd
+        data={buildBlogPostingSchema({
+          slug,
+          locale: locale as Locale,
+          title: meta.title,
+          description: meta.description,
+          date: meta.date,
+          tags: meta.tags,
+          category: meta.category,
+        })}
+      />
+      <JsonLd
+        data={buildBreadcrumbSchema({
+          locale: locale as Locale,
+          slug,
+          title: meta.title,
+          blogLabel: dict.nav.blog,
+        })}
+      />
       {/* Sidebar Context layout */}
       <div className="flex">
         {/* Left sidebar: metadata */}

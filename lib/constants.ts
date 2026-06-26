@@ -12,3 +12,16 @@ function resolveSiteUrl(): string {
 
 export const SITE_URL = resolveSiteUrl();
 export const SITE_NAME = "hyuntae's blog";
+export const SITE_DESCRIPTION =
+  "Backend developer blog — OpenSearch, Spring, Python, and more";
+
+// 구조화 데이터(JSON-LD)·llms.txt에서 공통으로 쓰는 저자 정보.
+export const AUTHOR = {
+  name: "Hyuntae Kim",
+  alternateName: "Ken",
+  jobTitle: "Backend Developer",
+  sameAs: [
+    "https://github.com/Hyuntae-91",
+    "https://www.linkedin.com/in/hyuntae-kim-8aa09514b/",
+  ],
+} as const;
