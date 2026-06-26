@@ -67,6 +67,9 @@ export async function generateMetadata({
       languages: Object.fromEntries(
         locales.map((l) => [l, `${SITE_URL}/${l}/blog/${slug}`])
       ),
+      types: {
+        "application/rss+xml": `${SITE_URL}/${locale}/feed.xml`,
+      },
     },
   };
 }
