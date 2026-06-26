@@ -16,18 +16,12 @@ function extractText(node: React.ReactNode): string {
 }
 
 export const mdxComponents: MDXComponents = {
+  // mermaid는 remark 단계(remarkMermaid)에서 <Mermaid>로 미리 분리되므로
+  // 여기서는 Shiki가 토큰화한 일반 코드블록만 다룬다. children(=code 엘리먼트)을
+  // 텍스트로 펼쳐 복사 버튼용 raw 코드를 만든다.
   pre: ({ children, ...rest }) => {
     if (React.isValidElement(children)) {
       const codeProps = children.props as Record<string, unknown>;
-      const className = (codeProps.className as string) ?? "";
-
-      // Mermaid blocks
-      if (className.includes("language-mermaid")) {
-        const code = (codeProps.children as string) ?? "";
-        return <Mermaid chart={code} />;
-      }
-
-      // Regular code blocks with copy button
       const code = extractText(codeProps.children as React.ReactNode);
       return (
         <CodeBlock code={code} {...rest}>

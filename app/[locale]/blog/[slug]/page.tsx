@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { compileMDX } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
+import rehypeShiki from "@shikijs/rehype";
+import { remarkMermaid } from "@/lib/remark-mermaid";
 import { hasLocale, getDictionary, type Locale, locales } from "@/lib/i18n";
 import { getPost, getAllSlugs, getAllPosts } from "@/lib/posts";
 import { Badge } from "@/components/ui/badge";
@@ -132,7 +134,21 @@ export default async function PostPage({
     components: mdxComponents,
     options: {
       parseFrontmatter: false,
-      mdxOptions: { remarkPlugins: [remarkGfm] },
+      mdxOptions: {
+        remarkPlugins: [remarkGfm, remarkMermaid],
+        rehypePlugins: [
+          [
+            rehypeShiki,
+            {
+              // 기존 디자인 톤(catppuccin)과 일관. defaultColor:false면 색을
+              // inline 박지 않고 CSS 변수(--shiki-light/--shiki-dark)만 출력 →
+              // globals.css에서 .dark 클래스로 라이트/다크 전환.
+              themes: { light: "catppuccin-latte", dark: "catppuccin-mocha" },
+              defaultColor: false,
+            },
+          ],
+        ],
+      },
     },
   });
 
@@ -334,7 +350,7 @@ export default async function PostPage({
           <Separator className="mb-8" />
 
           {/* MDX Content */}
-          <div className="prose prose-neutral max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-pre:bg-[#1e1e2e] prose-pre:text-[#cdd6f4]">
+          <div className="prose prose-neutral max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-pre:bg-transparent prose-pre:p-0">
             {mdxContent}
           </div>
 
