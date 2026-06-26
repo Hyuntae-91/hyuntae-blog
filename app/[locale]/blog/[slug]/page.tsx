@@ -4,7 +4,9 @@ import Link from "next/link";
 import { compileMDX } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import rehypeShiki from "@shikijs/rehype";
+import rehypeSlug from "rehype-slug";
 import { remarkMermaid } from "@/lib/remark-mermaid";
+import { extractToc } from "@/lib/toc";
 import { hasLocale, getDictionary, type Locale, locales } from "@/lib/i18n";
 import { getPost, getAllSlugs, getAllPosts } from "@/lib/posts";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +16,7 @@ import { mdxComponents } from "@/components/mdx-components";
 import { ViewCounter } from "@/components/view-counter";
 import { JsonLd } from "@/components/json-ld";
 import { Comments } from "@/components/comments";
+import { TableOfContents } from "@/components/toc";
 import {
   buildBlogPostingSchema,
   buildBreadcrumbSchema,
@@ -137,6 +140,7 @@ export default async function PostPage({
       mdxOptions: {
         remarkPlugins: [remarkGfm, remarkMermaid],
         rehypePlugins: [
+          rehypeSlug,
           [
             rehypeShiki,
             {
@@ -151,6 +155,9 @@ export default async function PostPage({
       },
     },
   });
+
+  // 목차: raw 마크다운에서 h2/h3 추출 (id는 rehypeSlug가 부여한 heading id와 일치).
+  const toc = extractToc(content);
 
   // Related posts: 태그 유사도(공유 태그 수) 기반, 같은 카테고리는 가산점.
   // 겹치는 태그가 하나도 없으면 제외한다.
@@ -169,7 +176,7 @@ export default async function PostPage({
     .map((item) => item.post);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-7xl">
       <JsonLd
         data={buildBlogPostingSchema({
           slug,
@@ -297,7 +304,7 @@ export default async function PostPage({
         </aside>
 
         {/* Main content */}
-        <article className="flex-1 px-6 py-10 lg:px-12">
+        <article className="flex-1 min-w-0 px-6 py-10 lg:px-12">
           {/* Mobile: translation bar */}
           <div className="mb-4 flex flex-wrap gap-2 lg:hidden">
             {locales.map((l) => {
@@ -349,6 +356,27 @@ export default async function PostPage({
 
           <Separator className="mb-8" />
 
+          {/* Mobile: TOC (접이식) */}
+          {toc.length > 0 && (
+            <details className="mb-8 rounded-lg border border-border p-4 lg:hidden">
+              <summary className="cursor-pointer text-sm font-semibold">
+                {dict.post.contents}
+              </summary>
+              <ul className="mt-3 space-y-1.5 text-sm">
+                {toc.map((item) => (
+                  <li key={item.id} className={item.depth === 3 ? "pl-4" : ""}>
+                    <a
+                      href={`#${item.id}`}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      {item.text}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+
           {/* MDX Content */}
           <div className="prose prose-neutral max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-pre:bg-transparent prose-pre:p-0">
             {mdxContent}
@@ -357,6 +385,15 @@ export default async function PostPage({
           <Separator className="my-10" />
           <Comments term={slug} lang={locale} />
         </article>
+
+        {/* Right sidebar: TOC (desktop) */}
+        {toc.length > 0 && (
+          <aside className="hidden w-56 shrink-0 px-6 py-10 lg:block">
+            <div className="sticky top-20">
+              <TableOfContents items={toc} label={dict.post.contents} />
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );
