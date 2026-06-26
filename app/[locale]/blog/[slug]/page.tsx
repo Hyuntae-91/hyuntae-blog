@@ -11,6 +11,7 @@ import { TranslationPendingModal } from "@/components/translation-pending-modal"
 import { mdxComponents } from "@/components/mdx-components";
 import { ViewCounter } from "@/components/view-counter";
 import { JsonLd } from "@/components/json-ld";
+import { Comments } from "@/components/comments";
 import {
   buildBlogPostingSchema,
   buildBreadcrumbSchema,
@@ -326,6 +327,9 @@ export default async function PostPage({
           <div className="prose prose-neutral max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-pre:bg-[#1e1e2e] prose-pre:text-[#cdd6f4]">
             {mdxContent}
           </div>
+
+          <Separator className="my-10" />
+          <Comments term={slug} lang={locale} />
         </article>
       </div>
     </div>
