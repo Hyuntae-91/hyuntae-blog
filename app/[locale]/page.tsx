@@ -6,6 +6,7 @@ import { getAllPosts } from "@/lib/posts";
 import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/json-ld";
 import { buildWebSiteSchema } from "@/lib/structured-data";
+import { buildOpenGraph } from "@/lib/og-meta";
 import { SITE_URL } from "@/lib/constants";
 
 export async function generateMetadata({
@@ -18,6 +19,10 @@ export async function generateMetadata({
   const dict = await getDictionary(locale);
   return {
     title: { absolute: "hyuntae's blog" },
+    openGraph: buildOpenGraph({
+      locale: locale as Locale,
+      url: `${SITE_URL}/${locale}`,
+    }),
     alternates: {
       canonical: `${SITE_URL}/${locale}`,
       languages: Object.fromEntries(

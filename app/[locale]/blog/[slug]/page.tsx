@@ -15,6 +15,7 @@ import {
   buildBlogPostingSchema,
   buildBreadcrumbSchema,
 } from "@/lib/structured-data";
+import { buildOpenGraph } from "@/lib/og-meta";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/constants";
 
@@ -54,14 +55,15 @@ export async function generateMetadata({
     title: meta.title,
     description: meta.description,
     keywords: meta.tags,
-    openGraph: {
+    openGraph: buildOpenGraph({
+      locale: locale as Locale,
+      url: `${SITE_URL}/${locale}/blog/${slug}`,
       title: meta.title,
       description: meta.description,
       type: "article",
       publishedTime: meta.date,
       tags: meta.tags,
-      url: `${SITE_URL}/${locale}/blog/${slug}`,
-    },
+    }),
     alternates: {
       canonical: `${SITE_URL}/${locale}/blog/${slug}`,
       languages: Object.fromEntries(

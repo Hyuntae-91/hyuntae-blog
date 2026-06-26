@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getDictionary, hasLocale, locales } from "@/lib/i18n";
+import { getDictionary, hasLocale, locales, type Locale } from "@/lib/i18n";
 import { getAllPosts } from "@/lib/posts";
 import { PostList } from "@/components/post-list";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/constants";
+import { buildOpenGraph } from "@/lib/og-meta";
 
 // 조회수를 빌드 타임에 박제하지 않고, 60초마다 백그라운드 재생성(ISR)으로 최신화한다.
 export const revalidate = 60;
@@ -19,6 +20,10 @@ export async function generateMetadata({
   const dict = await getDictionary(locale);
   return {
     title: dict.nav.blog,
+    openGraph: buildOpenGraph({
+      locale: locale as Locale,
+      url: `${SITE_URL}/${locale}/blog`,
+    }),
     alternates: {
       canonical: `${SITE_URL}/${locale}/blog`,
       languages: Object.fromEntries(

@@ -4,6 +4,7 @@ import { hasLocale, getDictionary, locales, type Locale } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SITE_URL } from "@/lib/constants";
+import { buildOpenGraph } from "@/lib/og-meta";
 
 export async function generateMetadata({
   params,
@@ -16,6 +17,11 @@ export async function generateMetadata({
   return {
     title: dict.nav.about,
     description: dict.about.roleSummary,
+    openGraph: buildOpenGraph({
+      locale: locale as Locale,
+      url: `${SITE_URL}/${locale}/about`,
+      description: dict.about.roleSummary,
+    }),
     alternates: {
       canonical: `${SITE_URL}/${locale}/about`,
       languages: Object.fromEntries(

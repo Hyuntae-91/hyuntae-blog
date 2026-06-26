@@ -9,12 +9,8 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  openGraph: {
-    type: "website",
-    siteName: SITE_NAME,
-    locale: "ko_KR",
-    alternateLocale: ["en_US", "ja_JP"],
-  },
+  // openGraph는 로케일을 알 수 없는 root에 두지 않고, 각 [locale] 페이지에서
+  // buildOpenGraph로 og:locale을 동적으로 설정한다.
   robots: {
     index: true,
     follow: true,
