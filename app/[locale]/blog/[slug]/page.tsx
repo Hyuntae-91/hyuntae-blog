@@ -136,11 +136,21 @@ export default async function PostPage({
     },
   });
 
-  // Related posts (same category, excluding self)
+  // Related posts: 태그 유사도(공유 태그 수) 기반, 같은 카테고리는 가산점.
+  // 겹치는 태그가 하나도 없으면 제외한다.
   const allPosts = getAllPosts(locale);
+  const tagSet = new Set(meta.tags);
   const related = allPosts
-    .filter((p) => p.slug !== slug && p.category === meta.category)
-    .slice(0, 3);
+    .filter((p) => p.slug !== slug)
+    .map((p) => {
+      const sharedTags = p.tags.filter((t) => tagSet.has(t)).length;
+      const score = sharedTags + (p.category === meta.category ? 0.5 : 0);
+      return { post: p, sharedTags, score };
+    })
+    .filter((item) => item.sharedTags > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((item) => item.post);
 
   return (
     <div className="mx-auto max-w-5xl">
