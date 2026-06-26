@@ -149,6 +149,11 @@ export default async function PostPage({
               // globals.css에서 .dark 클래스로 라이트/다크 전환.
               themes: { light: "catppuccin-latte", dark: "catppuccin-mocha" },
               defaultColor: false,
+              // 언어 미지정(```)·미지원 코드블록도 plaintext로 토큰화해 .shiki를
+              // 입힌다. 이게 없으면 lang 없는 블록은 prose 기본색(밝은 글자)으로
+              // 떨어져 라이트 모드 흰 배경에서 글자가 안 보인다.
+              defaultLanguage: "plaintext",
+              fallbackLanguage: "plaintext",
             },
           ],
         ],
