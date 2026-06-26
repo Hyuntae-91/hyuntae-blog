@@ -53,7 +53,7 @@ const timeline: TimelineItem[] = [
       en: "Unified search over 5.7M records on AWS OpenSearch (135ms avg, 312ms p95, 99.7% success). Traced an N+1 bottleneck with Datadog APM and cut response time from 6s to under 100ms. Adopted Testcontainers for integration testing.",
       ja: "AWS OpenSearch導入で570万件の統合検索を実現(平均135ms・p95 312ms・成功率99.7%)。Datadog APMでN+1ボトルネックを特定し、レスポンスを6秒→100ms以内に改善。Testcontainersで統合テストを導入。",
     },
-    tags: ["Java", "Spring", "OpenSearch", "Datadog", "Testcontainers"],
+    tags: ["Java", "Kotlin", "Spring", "OpenSearch", "Datadog", "Testcontainers"],
   },
   {
     date: "2021.06 - 2025.08",
@@ -143,7 +143,7 @@ const socialLinks = [
 ];
 
 const skillGroups: Array<{ id: SkillGroupId; items: string[] }> = [
-  { id: "languages", items: ["Python", "Java"] },
+  { id: "languages", items: ["Python", "Java", "Kotlin"] },
   { id: "frameworks", items: ["FastAPI", "Flask", "Spring"] },
   {
     id: "infrastructure",
