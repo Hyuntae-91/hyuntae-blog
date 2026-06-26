@@ -49,11 +49,11 @@ const timeline: TimelineItem[] = [
     },
     company: "Zimssa",
     description: {
-      ko: "AWS OpenSearch 도입으로 검색 시스템 최적화, 레거시 slow API 개선, Testcontainers 통합테스트 도입",
-      en: "Search system optimization with AWS OpenSearch, legacy slow API improvements, Testcontainers integration testing",
-      ja: "AWS OpenSearchによる検索システム最適化、レガシーslow API改善、Testcontainers統合テスト導入",
+      ko: "AWS OpenSearch 도입으로 570만 건 통합 검색 구현(평균 135ms·p95 312ms·성공률 99.7%), Datadog APM으로 N+1 병목을 특정해 응답 6초→100ms 개선, Testcontainers 통합테스트 도입",
+      en: "Unified search over 5.7M records on AWS OpenSearch (135ms avg, 312ms p95, 99.7% success). Traced an N+1 bottleneck with Datadog APM and cut response time from 6s to under 100ms. Adopted Testcontainers for integration testing.",
+      ja: "AWS OpenSearch導入で570万件の統合検索を実現(平均135ms・p95 312ms・成功率99.7%)。Datadog APMでN+1ボトルネックを特定し、レスポンスを6秒→100ms以内に改善。Testcontainersで統合テストを導入。",
     },
-    tags: ["Java", "Spring", "OpenSearch", "Testcontainers"],
+    tags: ["Java", "Spring", "OpenSearch", "Datadog", "Testcontainers"],
   },
   {
     date: "2021.06 - 2025.08",
@@ -64,11 +64,11 @@ const timeline: TimelineItem[] = [
     },
     company: "loplat",
     description: {
-      ko: "MAU 900만 오프라인 위치 플랫폼 백엔드 설계/운영, 100만 건 FCM 알림 5초 내 전송 파이프라인 구축, 공간쿼리 100ms 튜닝",
-      en: "Designed and operated backend for offline location platform with 9M MAU, built FCM pipeline delivering 1M notifications in 5 seconds, spatial query tuning to 100ms",
-      ja: "MAU 900万のオフライン位置プラットフォームのバックエンド設計・運用、100万件FCM通知を5秒以内に送信するパイプライン構築、空間クエリ100msチューニング",
+      ko: "MAU 900만 오프라인 위치 플랫폼 백엔드 설계·운영. Pub/Sub·Cloud Functions로 FCM 100만 건을 5초 내 전송(전달 성공률 98%↑), 공간 인덱스 튜닝으로 100ms 내 위치 조회(iOS 100만 MAU 마케팅 전환), LGU+ WPS 측위 정확도 32.3m→19.9m 개선",
+      en: "Designed and ran the backend for a 9M-MAU offline location platform. Built a Pub/Sub + Cloud Functions pipeline delivering 1M FCM notifications in under 5 seconds (98%+ delivery), tuned spatial indexes for sub-100ms location lookups (powering a 1M-MAU iOS campaign), and improved LGU+ WPS positioning accuracy from 32.3m to 19.9m.",
+      ja: "MAU 900万のオフライン位置プラットフォームのバックエンドを設計・運用。Pub/Sub・Cloud FunctionsでFCM 100万件を5秒以内に送信(配信成功率98%以上)、空間インデックスのチューニングで位置取得を100ms以内に短縮(iOS 100万MAUのマーケティング施策を実現)、LGU+ WPSの測位精度を32.3m→19.9mに改善。",
     },
-    tags: ["Python", "FastAPI", "GCP", "Redis", "BigQuery"],
+    tags: ["Python", "FastAPI", "GCP", "Pub/Sub", "BigQuery"],
   },
   {
     date: "2019.11 - 2020.07",
@@ -89,22 +89,22 @@ const timeline: TimelineItem[] = [
 
 const bio: Record<Locale, string[]> = {
   ko: [
-    "MAU 750만 규모의 위치 데이터 플랫폼을 설계하고 운영해 온 백엔드 개발자입니다.",
-    "100만 건의 FCM 알림을 5초 내에 전송하는 메시지 파이프라인을 구축했고, 공간쿼리 튜닝으로 대규모 트래픽 환경에서의 성능 최적화를 경험했습니다.",
-    "현재는 Java/Spring 기반 서비스에서 AWS OpenSearch 도입과 레거시 API 병목 제거를 통해 검색/응답 성능을 개선하고 있습니다.",
-    "신뢰할 수 있는 시스템을 만드는 데 관심이 많으며, Testcontainers 기반 통합테스트 도입 등 운영 체계 고도화에도 꾸준히 투자하고 있습니다.",
+    "MAU 900만 오프라인 위치 플랫폼(loplat)에서 4년간, 측정→가설→검증 루프로 병목을 지표로 잡아온 백엔드 엔지니어입니다.",
+    "FCM 100만 건을 5초 내 전송하는 파이프라인을 구축하고, N+1 병목을 응답 6초→100ms로 개선하는 등 대규모 트래픽 환경에서 성능을 최적화해 왔습니다.",
+    "현재는 Java/Spring 기반 서비스에서 AWS OpenSearch 도입과 레거시 API 병목 제거로 검색·응답 성능을 개선하고 있습니다.",
+    "테스트 가능한 구조로 변경 비용을 낮추는 데 관심이 많고, Testcontainers 통합테스트 도입 등 운영 체계 고도화에 꾸준히 투자합니다.",
   ],
   en: [
-    "Backend developer with experience designing and operating a location data platform serving 7.5M MAU.",
-    "Built a message pipeline that delivers 1M FCM notifications within 5 seconds. Optimized performance in high-traffic environments through spatial query tuning.",
-    "Currently improving search and response performance on a Java/Spring-based service by introducing AWS OpenSearch and eliminating legacy API bottlenecks.",
-    "Passionate about building reliable systems, with a focus on operational maturity through practices like Testcontainers-based integration testing.",
+    "Backend engineer who spent four years at a 9M-MAU offline location platform (loplat), chasing down bottlenecks with a measure-hypothesize-verify loop.",
+    "Built a pipeline that delivers 1M FCM notifications in under 5 seconds and cut an N+1 bottleneck from 6s to under 100ms — performance work that held up under heavy traffic.",
+    "These days I work on a Java/Spring service, sharpening search and response times by adopting AWS OpenSearch and clearing out legacy API bottlenecks.",
+    "I care about making systems cheap to change and worth trusting, and I keep investing in operational maturity — like bringing in Testcontainers for integration tests.",
   ],
   ja: [
-    "MAU 750万規模の位置データプラットフォームを設計・運用してきたバックエンドエンジニアです。",
-    "100万件のFCM通知を5秒以内に送信するメッセージパイプラインを構築し、空間クエリチューニングで大規模トラフィック環境でのパフォーマンス最適化を経験しました。",
-    "現在はJava/SpringベースのサービスでAWS OpenSearch導入とレガシーAPIボトルネック除去により、検索・レスポンス性能を改善しています。",
-    "信頼性の高いシステム構築に関心があり、Testcontainersベースの統合テスト導入など運用体制の高度化にも継続的に取り組んでいます。",
+    "MAU 900万のオフライン位置プラットフォーム(loplat)で4年間、計測→仮説→検証のループでボトルネックを数値で捉えてきたバックエンドエンジニアです。",
+    "FCM 100万件を5秒以内に送信するパイプラインを構築し、N+1ボトルネックをレスポンス6秒→100ms以内に改善するなど、大規模トラフィック環境で性能を最適化してきました。",
+    "現在はJava/SpringベースのサービスでAWS OpenSearchの導入とレガシーAPIのボトルネック除去により、検索・レスポンス性能を改善しています。",
+    "テスト可能な構造で変更コストを下げることに関心があり、Testcontainersによる統合テスト導入など運用体制の高度化に継続的に取り組んでいます。",
   ],
 };
 
