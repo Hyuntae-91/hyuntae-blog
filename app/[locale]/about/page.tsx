@@ -89,22 +89,22 @@ const timeline: TimelineItem[] = [
 
 const bio: Record<Locale, string[]> = {
   ko: [
-    "MAU 900만 오프라인 위치 플랫폼(loplat)에서 4년간, 측정→가설→검증 루프로 병목을 지표로 잡아온 백엔드 엔지니어입니다.",
-    "FCM 100만 건을 5초 내 전송하는 파이프라인을 구축하고, N+1 병목을 응답 6초→100ms로 개선하는 등 대규모 트래픽 환경에서 성능을 최적화해 왔습니다.",
-    "현재는 Java/Spring 기반 서비스에서 AWS OpenSearch 도입과 레거시 API 병목 제거로 검색·응답 성능을 개선하고 있습니다.",
-    "테스트 가능한 구조로 변경 비용을 낮추는 데 관심이 많고, Testcontainers 통합테스트 도입 등 운영 체계 고도화에 꾸준히 투자합니다.",
+    "측정 → 가설 → 검증 루프로 병목을 지표로 잡는 백엔드 엔지니어입니다. 현재 짐싸에서 검색·응답 성능 개선을 맡고 있습니다.",
+    "AWS OpenSearch 도입으로 570만 건 통합 검색을 평균 135ms(p95 312ms·성공률 99.7%)로 구현했고, Datadog APM으로 N+1 병목을 특정해 응답을 6초→100ms로 줄였습니다.",
+    "Testcontainers 통합테스트 도입 등 테스트 가능한 구조로 변경 비용을 낮추고 운영 체계를 고도화하는 데 꾸준히 투자합니다.",
+    "그 전에는 MAU 900만 오프라인 위치 플랫폼(loplat)에서 4년간 FCM 100만 건/5초 전송, 공간 인덱스 100ms 튜닝 등 대규모 트래픽 백엔드를 설계·운영했습니다.",
   ],
   en: [
-    "Backend engineer who spent four years at a 9M-MAU offline location platform (loplat), chasing down bottlenecks with a measure-hypothesize-verify loop.",
-    "Built a pipeline that delivers 1M FCM notifications in under 5 seconds and cut an N+1 bottleneck from 6s to under 100ms — performance work that held up under heavy traffic.",
-    "These days I work on a Java/Spring service, sharpening search and response times by adopting AWS OpenSearch and clearing out legacy API bottlenecks.",
-    "I care about making systems cheap to change and worth trusting, and I keep investing in operational maturity — like bringing in Testcontainers for integration tests.",
+    "A backend engineer who pins down bottlenecks with metrics through a measure-hypothesize-verify loop. I currently own search and response performance at Zimssa.",
+    "I moved search to AWS OpenSearch — 5.7M records unified at 135ms avg (312ms p95, 99.7% success) — and traced an N+1 bottleneck with Datadog APM, cutting response time from 6s to under 100ms.",
+    "I care about keeping systems cheap to change and worth trusting, and I invest in operational maturity like Testcontainers-based integration tests.",
+    "Before that, I spent four years building and running the backend of a 9M-MAU offline location platform (loplat) — delivering 1M FCM notifications in 5 seconds, tuning spatial indexes to 100ms, and more.",
   ],
   ja: [
-    "MAU 900万のオフライン位置プラットフォーム(loplat)で4年間、計測→仮説→検証のループでボトルネックを数値で捉えてきたバックエンドエンジニアです。",
-    "FCM 100万件を5秒以内に送信するパイプラインを構築し、N+1ボトルネックをレスポンス6秒→100ms以内に改善するなど、大規模トラフィック環境で性能を最適化してきました。",
-    "現在はJava/SpringベースのサービスでAWS OpenSearchの導入とレガシーAPIのボトルネック除去により、検索・レスポンス性能を改善しています。",
-    "テスト可能な構造で変更コストを下げることに関心があり、Testcontainersによる統合テスト導入など運用体制の高度化に継続的に取り組んでいます。",
+    "計測 → 仮説 → 検証のループでボトルネックを数値で捉えるバックエンドエンジニアです。現在はZimssaで検索・レスポンス性能の改善を担っています。",
+    "AWS OpenSearch導入で570万件の統合検索を平均135ms(p95 312ms・成功率99.7%)で実現し、Datadog APMでN+1ボトルネックを特定してレスポンスを6秒→100ms以内に短縮しました。",
+    "Testcontainersによる統合テスト導入など、テスト可能な構造で変更コストを下げ、運用体制を高度化することに継続的に取り組んでいます。",
+    "それ以前はMAU 900万のオフライン位置プラットフォーム(loplat)で4年間、FCM 100万件を5秒以内に送信、空間インデックスを100msにチューニングするなど、大規模トラフィックのバックエンドを設計・運用しました。",
   ],
 };
 
