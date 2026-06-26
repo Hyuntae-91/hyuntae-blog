@@ -4,12 +4,22 @@
   },
   "nav": {
     "blog": "ブログ",
+    "life": "趣味",
     "about": "紹介"
+  },
+  "life": {
+    "hubTitle": "趣味",
+    "hubDescription": "開発以外に時間を注いでいること — 旅行・音楽・文学、そして経済。",
+    "postsLabel": "記事",
+    "empty": "まだ記事がありません。"
   },
   "home": {
     "latestPost": "最新記事",
     "allPosts": "全記事",
-    "readMore": "詳しく見る"
+    "readMore": "詳しく見る",
+    "beyondCodeTitle": "コードの外の自分",
+    "beyondCodeDescription": "開発以外に時間を注いでいること — 旅行・音楽・文学・経済。",
+    "beyondCodeCta": "趣味を見る"
   },
   "post": {
     "original": "原文",
@@ -31,6 +41,8 @@
   "about": {
     "title": "紹介",
     "skills": "技術スタック",
+    "interestsTitle": "関心ごと",
+    "interestsDescription": "開発以外にも、こうしたことに時間を注いでいます。",
     "roleSummary": "ボトルネックを数値で捉えるバックエンドエンジニア · Python · Java · Spring",
     "languagesTitle": "語学力",
     "skillGroups": {

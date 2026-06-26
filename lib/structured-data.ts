@@ -15,8 +15,9 @@ function personSchema(): JsonLdObject {
 }
 
 // 글 상세 페이지용 BlogPosting 스키마. 검색·AI가 글의 제목/저자/날짜/주제를 구조적으로 읽는다.
+// path는 로케일 다음의 경로(예: "blog/my-slug", "life/music/my-slug")로, 개발·취미 공용.
 export function buildBlogPostingSchema(params: {
-  slug: string;
+  path: string;
   locale: Locale;
   title: string;
   description: string;
@@ -24,7 +25,7 @@ export function buildBlogPostingSchema(params: {
   tags: string[];
   category: string;
 }): JsonLdObject {
-  const url = `${SITE_URL}/${params.locale}/blog/${params.slug}`;
+  const url = `${SITE_URL}/${params.locale}/${params.path}`;
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -43,11 +44,10 @@ export function buildBlogPostingSchema(params: {
 }
 
 // 글 상세 페이지용 BreadcrumbList 스키마. 검색 결과에 경로(홈 > 블로그 > 글)를 노출한다.
+// items는 홈 다음의 단계들(개발: 블로그>글, 취미: 취미>카테고리>글)로, path는 로케일 다음 경로.
 export function buildBreadcrumbSchema(params: {
   locale: Locale;
-  slug: string;
-  title: string;
-  blogLabel: string;
+  items: { name: string; path: string }[];
 }): JsonLdObject {
   const base = `${SITE_URL}/${params.locale}`;
   return {
@@ -55,13 +55,12 @@ export function buildBreadcrumbSchema(params: {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: SITE_NAME, item: base },
-      { "@type": "ListItem", position: 2, name: params.blogLabel, item: `${base}/blog` },
-      {
+      ...params.items.map((item, index) => ({
         "@type": "ListItem",
-        position: 3,
-        name: params.title,
-        item: `${base}/blog/${params.slug}`,
-      },
+        position: index + 2,
+        name: item.name,
+        item: `${base}/${item.path}`,
+      })),
     ],
   };
 }

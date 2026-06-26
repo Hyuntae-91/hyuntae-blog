@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale, locales, type Locale } from "@/lib/i18n";
 import { getAllPosts } from "@/lib/posts";
+import { LIFE_CATEGORIES } from "@/lib/categories";
 import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/json-ld";
 import { buildWebSiteSchema } from "@/lib/structured-data";
@@ -139,6 +140,32 @@ export default async function HomePage({
           ))}
         </div>
       )}
+
+      {/* 개발 밖의 나 → 취미 영역(/life) 발견 다리. 홈은 개발(포트폴리오) 전면, 취미는 하단의 절제된 진입. */}
+      <div className="mt-16 rounded-2xl border border-border bg-muted/30 p-6 sm:p-8">
+        <h3 className="text-lg font-bold">{dict.home.beyondCodeTitle}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {dict.home.beyondCodeDescription}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {LIFE_CATEGORIES.map((category) => (
+            <Link key={category.id} href={`/${locale}/life/${category.id}`}>
+              <Badge
+                variant="secondary"
+                className="cursor-pointer hover:bg-accent"
+              >
+                {category.label[locale]}
+              </Badge>
+            </Link>
+          ))}
+        </div>
+        <Link
+          href={`/${locale}/life`}
+          className="mt-4 inline-block text-sm font-medium text-foreground hover:underline"
+        >
+          {dict.home.beyondCodeCta} &rarr;
+        </Link>
+      </div>
     </div>
   );
 }

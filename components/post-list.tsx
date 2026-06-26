@@ -7,24 +7,43 @@ interface PostListProps {
   posts: PostMeta[];
   dict: any;
   initialViews?: Record<string, number>;
+  // 글 URL 빌더. 개발(/blog/[slug])과 취미(/life/[category]/[slug])가 달라 주입한다.
+  // 미지정 시 개발 블로그 경로로 폴백한다.
+  hrefFor?: (post: PostMeta) => string;
+  // 카테고리 배지 라벨을 로케일에 맞게 변환한다. 미지정 시 원본 문자열을 그대로 쓴다.
+  categoryLabelFor?: (category: string) => string;
+  // 카테고리 페이지처럼 전부 같은 카테고리면 배지가 중복이므로 끈다. 기본값 노출.
+  showCategory?: boolean;
 }
 
-export function PostList({ posts, dict, initialViews = {} }: PostListProps) {
+export function PostList({
+  posts,
+  dict,
+  initialViews = {},
+  hrefFor,
+  categoryLabelFor,
+  showCategory = true,
+}: PostListProps) {
   // 조회수는 서버(ISR)에서 내려준 값을 그대로 사용한다. 클라이언트 재요청 없음 → 깜빡임 없음.
   return (
     <div className="space-y-1">
       {posts.map((post) => {
         const views = initialViews[post.slug] ?? 0;
+        const href = hrefFor
+          ? hrefFor(post)
+          : `/${post.hrefLocale}/blog/${post.slug}`;
         return (
           <Link
             key={post.slug}
-            href={`/${post.hrefLocale}/blog/${post.slug}`}
+            href={href}
             className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg px-3 py-4 transition-colors hover:bg-accent gap-2"
           >
             <div className="flex flex-wrap items-center gap-3">
-              {post.category && (
+              {showCategory && post.category && (
                 <Badge variant="secondary" className="text-xs">
-                  {post.category}
+                  {categoryLabelFor
+                    ? categoryLabelFor(post.category)
+                    : post.category}
                 </Badge>
               )}
               {!post.isTranslationAvailable && (

@@ -25,14 +25,22 @@ interface Props {
   locale: Locale;
   originalLocale: Locale;
   slug: string;
+  // 원본 글로 이동할 경로. 개발(/blog)과 취미(/life/[category])가 달라 주입한다.
+  // 미지정 시 개발 블로그 경로로 폴백한다.
+  redirectHref?: string;
 }
 
-export function TranslationPendingModal({ locale, originalLocale, slug }: Props) {
+export function TranslationPendingModal({
+  locale,
+  originalLocale,
+  slug,
+  redirectHref,
+}: Props) {
   const router = useRouter();
   const msg = messages[locale] ?? messages.en;
 
   function handleConfirm() {
-    router.replace(`/${originalLocale}/blog/${slug}`);
+    router.replace(redirectHref ?? `/${originalLocale}/blog/${slug}`);
   }
 
   return (

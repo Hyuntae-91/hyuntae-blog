@@ -12,7 +12,7 @@ const localeLabels: Record<Locale, string> = { ko: "KO", en: "EN", ja: "JA" };
 interface HeaderProps {
   locale: Locale;
   dict: {
-    nav: { blog: string; about: string };
+    nav: { blog: string; life: string; about: string };
   };
 }
 
@@ -39,6 +39,12 @@ export function Header({ locale, dict }: HeaderProps) {
             className={`text-sm transition-colors ${isActive("/blog") ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
             {dict.nav.blog}
+          </Link>
+          <Link
+            href={`/${locale}/life`}
+            className={`text-sm transition-colors ${isActive("/life") ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            {dict.nav.life}
           </Link>
           <Link
             href={`/${locale}/about`}

@@ -4,12 +4,22 @@
   },
   "nav": {
     "blog": "블로그",
+    "life": "취미",
     "about": "소개"
+  },
+  "life": {
+    "hubTitle": "취미",
+    "hubDescription": "개발 외에 시간을 쏟는 것들 — 여행, 음악, 문학, 그리고 경제.",
+    "postsLabel": "글",
+    "empty": "아직 글이 없습니다."
   },
   "home": {
     "latestPost": "최신 글",
     "allPosts": "전체 글",
-    "readMore": "자세히 보기"
+    "readMore": "자세히 보기",
+    "beyondCodeTitle": "개발 밖의 나",
+    "beyondCodeDescription": "코드 바깥에서 시간을 쏟는 것들 — 여행, 음악, 문학, 경제.",
+    "beyondCodeCta": "취미 둘러보기"
   },
   "post": {
     "original": "원본",
@@ -31,6 +41,8 @@
   "about": {
     "title": "소개",
     "skills": "기술 스택",
+    "interestsTitle": "관심사",
+    "interestsDescription": "개발 외에 이런 것들에도 시간을 쏟습니다.",
     "roleSummary": "지표로 병목을 잡는 백엔드 엔지니어 · Python · Java · Spring",
     "languagesTitle": "언어 능력",
     "skillGroups": {

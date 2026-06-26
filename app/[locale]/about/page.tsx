@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { hasLocale, getDictionary, locales, type Locale } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { LIFE_CATEGORIES } from "@/lib/categories";
 import { SITE_URL } from "@/lib/constants";
 import { buildOpenGraph } from "@/lib/og-meta";
 
@@ -286,6 +288,30 @@ export default async function AboutPage({
                 )}
               </div>
             </div>
+          ))}
+        </div>
+      </div>
+
+      <Separator className="my-10" />
+
+      {/* Interests → 취미 영역(/life) 발견 다리. 포트폴리오를 본 뒤 "이 사람은?"에 답한다. */}
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">
+          {dict.about.interestsTitle}
+        </h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          {dict.about.interestsDescription}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {LIFE_CATEGORIES.map((category) => (
+            <Link key={category.id} href={`/${locale}/life/${category.id}`}>
+              <Badge
+                variant="outline"
+                className="cursor-pointer hover:bg-accent"
+              >
+                {category.label[locale]}
+              </Badge>
+            </Link>
           ))}
         </div>
       </div>

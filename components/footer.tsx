@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
 import { Users, Globe } from "lucide-react";
 import { Locale } from "@/lib/locale-helpers";
 
 interface FooterProps {
   locale: Locale;
   dict: {
+    nav: {
+      blog: string;
+      life: string;
+      about: string;
+    };
     stats: {
       todayVisitors: string;
       totalVisitors: string;
@@ -36,7 +42,18 @@ export function Footer({ locale, dict }: FooterProps) {
   return (
     <footer className="border-t border-border bg-background/80 py-8 text-sm text-muted-foreground">
       <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
+        <div className="flex flex-col items-center gap-2 sm:items-start">
+          <nav className="flex items-center gap-4 text-xs">
+            <Link href={`/${locale}/blog`} className="transition-colors hover:text-foreground">
+              {dict.nav.blog}
+            </Link>
+            <Link href={`/${locale}/life`} className="transition-colors hover:text-foreground">
+              {dict.nav.life}
+            </Link>
+            <Link href={`/${locale}/about`} className="transition-colors hover:text-foreground">
+              {dict.nav.about}
+            </Link>
+          </nav>
           <p>© {new Date().getFullYear()} hyuntae. All rights reserved.</p>
         </div>
         {stats && (

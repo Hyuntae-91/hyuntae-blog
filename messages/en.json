@@ -4,12 +4,22 @@
   },
   "nav": {
     "blog": "Blog",
+    "life": "Life",
     "about": "About"
+  },
+  "life": {
+    "hubTitle": "Life",
+    "hubDescription": "What I spend time on outside code — travel, music, books, and the economy.",
+    "postsLabel": "posts",
+    "empty": "No posts yet."
   },
   "home": {
     "latestPost": "Latest",
     "allPosts": "All Posts",
-    "readMore": "Read more"
+    "readMore": "Read more",
+    "beyondCodeTitle": "Beyond code",
+    "beyondCodeDescription": "What I spend time on outside code — travel, music, books, and the economy.",
+    "beyondCodeCta": "Explore my hobbies"
   },
   "post": {
     "original": "Original",
@@ -31,6 +41,8 @@
   "about": {
     "title": "About",
     "skills": "Skills",
+    "interestsTitle": "Interests",
+    "interestsDescription": "Outside of code, here's what I spend my time on.",
     "roleSummary": "Backend engineer who tracks down bottlenecks with metrics · Python · Java · Spring",
     "languagesTitle": "Languages",
     "skillGroups": {
