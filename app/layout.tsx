@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_URL, SITE_NAME } from "@/lib/constants";
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     default: SITE_NAME,
     template: `%s | ${SITE_NAME}`,
   },
-  description: "Backend developer blog — OpenSearch, Spring, Python, and more",
+  description: SITE_DESCRIPTION,
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  // Search Console 소유권 확인용. Vercel 환경변수 NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION에
+  // 값을 넣으면 <meta name="google-site-verification"> 태그가 자동 생성된다. (미설정 시 태그 없음)
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   },
   alternates: {
     canonical: SITE_URL,
