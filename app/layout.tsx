@@ -19,10 +19,20 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-  // Search Console 소유권 확인용. Vercel 환경변수 NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION에
-  // 값을 넣으면 <meta name="google-site-verification"> 태그가 자동 생성된다. (미설정 시 태그 없음)
+  // 검색엔진 소유권 확인용. 해당 환경변수에 값을 넣으면 메타태그가 자동 생성된다.
+  // - Google:  NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+  // - Naver:   NEXT_PUBLIC_NAVER_SITE_VERIFICATION
+  // (미설정 시 빈 태그가 생기지 않도록 Naver는 값이 있을 때만 추가한다)
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    ...(process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION
+      ? {
+          other: {
+            "naver-site-verification":
+              process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION,
+          },
+        }
+      : {}),
   },
   alternates: {
     canonical: SITE_URL,
