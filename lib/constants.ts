@@ -11,6 +11,24 @@ function resolveSiteUrl(): string {
 }
 
 export const SITE_URL = resolveSiteUrl();
+
+// 구 프로덕션 도메인. 커스텀 도메인 전환 후에도 기존 색인·외부 링크가 남아있으므로
+// 여기로 들어온 요청은 정식 도메인으로 영구(308) 이전해 SEO 권위를 합친다.
+// 프리뷰 배포(해시 호스트)·로컬은 건드리지 않도록 명시적 호스트만 대상으로 한다.
+export const LEGACY_HOSTS = ["hyuntae-blog.vercel.app"];
+
+// 구 도메인 요청이면 정식 도메인의 동일 경로 절대 URL을, 아니면 null을 반환한다.
+export function resolveLegacyRedirect(
+  host: string | null,
+  pathWithQuery: string
+): string | null {
+  if (!host || !LEGACY_HOSTS.includes(host)) return null;
+  const target = new URL(pathWithQuery, SITE_URL);
+  // 정식 도메인이 아직 구 도메인이면(환경변수 미설정) 자기 자신으로의 리다이렉트 루프를 막는다.
+  if (target.host === host) return null;
+  return target.toString();
+}
+
 export const SITE_NAME = "hyuntae's blog";
 export const SITE_DESCRIPTION =
   "Backend developer blog — OpenSearch, Spring, Python, and more";
