@@ -182,3 +182,11 @@
 .dark .shiki span {
   color: var(--shiki-dark);
 }
+
+/* 인라인 코드(`...`) — Tailwind typography 기본값이 code의 ::before/::after에 백틱(`)
+   문자를 넣어 화면에 그대로 보인다. 인라인 code의 백틱만 제거한다.
+   .prose code(0,1,2)가 typography의 :where(code)(0,1,1)보다 specificity가 높아 우선. */
+.prose code::before,
+.prose code::after {
+  content: none;
+}
