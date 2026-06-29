@@ -7,9 +7,10 @@ import rehypeSlug from "rehype-slug";
 import { remarkMermaid } from "@/lib/remark-mermaid";
 import { extractToc } from "@/lib/toc";
 import { hasLocale, getDictionary, type Locale, locales } from "@/lib/i18n";
-import { getPost, getAllSlugs, getAllPosts } from "@/lib/posts";
+import { getPost, getAllSlugs, getAllPosts, getPostSummary } from "@/lib/posts";
 import { rankRelatedPosts } from "@/lib/related-posts";
 import { TranslationPendingModal } from "@/components/translation-pending-modal";
+import { ComingSoonView } from "@/components/coming-soon-view";
 import { mdxComponents } from "@/components/mdx-components";
 import { PostView } from "@/components/post-view";
 import { JsonLd } from "@/components/json-ld";
@@ -32,11 +33,16 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   if (!hasLocale(locale)) return {};
 
+  const summary = getPostSummary(slug, locale);
+  if (!summary) return {};
+  // 공개 전(Coming Soon) 글은 검색엔진에 색인되지 않도록 noindex.
+  if (summary.isDraft) {
+    return { title: summary.title, robots: { index: false, follow: false } };
+  }
+
   const post = await getPost(slug, locale);
   if (!post) {
-    const fallback = getAllPosts(locale).find((p) => p.slug === slug);
-    if (!fallback) return {};
-    return { title: fallback.title };
+    return { title: summary.title };
   }
 
   const { meta } = post;
@@ -84,17 +90,30 @@ export default async function PostPage({
   const { locale, slug } = await params;
   if (!hasLocale(locale)) notFound();
 
+  const summary = getPostSummary(slug, locale);
+
+  // 실존하지 않는 슬러그(오타 링크 등) → 진짜 404.
+  if (!summary) notFound();
+
+  // 내가 의도적으로 건 링크지만 아직 공개 전 → 404 대신 Coming Soon 안내.
+  if (summary.isDraft) {
+    return (
+      <ComingSoonView
+        locale={locale}
+        title={summary.title}
+        backHref={`/${locale}/blog`}
+      />
+    );
+  }
+
   const post = await getPost(slug, locale);
 
-  // No content at all for this slug (not even ko)
+  // 공개된 글이지만 이 언어 번역이 아직 없음 → 원문으로 유도하는 모달.
   if (!post) {
-    const postSummary = getAllPosts(locale).find((item) => item.slug === slug);
-    if (!postSummary) notFound();
-    // Show modal-only page that redirects to original language
     return (
       <TranslationPendingModal
         locale={locale}
-        originalLocale={postSummary.originalLang}
+        originalLocale={summary.originalLang}
         slug={slug}
       />
     );

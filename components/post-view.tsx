@@ -7,6 +7,7 @@ import { Comments } from "@/components/comments";
 import { TableOfContents } from "@/components/toc";
 import type { TocItem } from "@/lib/toc";
 import { locales, type Locale } from "@/lib/locale-helpers";
+import { formatPostDate } from "@/lib/date";
 
 const langNames: Record<string, Record<Locale, string>> = {
   ko: { ko: "한국어", en: "English", ja: "日本語" },
@@ -14,11 +15,11 @@ const langNames: Record<string, Record<Locale, string>> = {
   ja: { ko: "韓国語", en: "English", ja: "日本語" },
 };
 
-// "Coming soon" in each language's own language
+// 한·영·일 모두 "Coming Soon"으로 통일해 노출한다(현지화하지 않음).
 const comingSoonLabels: Record<Locale, string> = {
-  ko: "준비 중",
-  en: "Coming soon",
-  ja: "準備中",
+  ko: "Coming Soon",
+  en: "Coming Soon",
+  ja: "Coming Soon",
 };
 
 export interface PostViewMeta {
@@ -94,7 +95,7 @@ export function PostView({
               <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {dict.post.dateLabel}
               </h4>
-              <p className="text-sm">{meta.date}</p>
+              <p className="text-sm">{formatPostDate(meta.date)}</p>
             </div>
             <div>
               <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -248,7 +249,7 @@ export function PostView({
 
           {/* Mobile: meta */}
           <div className="mb-6 flex flex-wrap items-center gap-3 text-sm text-muted-foreground lg:hidden">
-            <span>{meta.date}</span>
+            <span>{formatPostDate(meta.date)}</span>
             {meta.category && (
               <Badge variant="secondary">{displayCategory}</Badge>
             )}

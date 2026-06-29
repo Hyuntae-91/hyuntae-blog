@@ -24,7 +24,7 @@
   "post": {
     "original": "原文",
     "available": "翻訳あり",
-    "comingSoon": "準備中",
+    "comingSoon": "Coming Soon",
     "minRead": "分で読める",
     "contents": "目次",
     "relatedPosts": "関連記事",
@@ -55,6 +55,6 @@
   "translationStatus": {
     "original": "原文: {lang}",
     "available": "{lang}",
-    "comingSoon": "{lang} 準備中"
+    "comingSoon": "{lang} Coming Soon"
   }
 }

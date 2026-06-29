@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale, locales, type Locale } from "@/lib/i18n";
 import { getAllPosts } from "@/lib/posts";
+import { formatPostDate } from "@/lib/date";
 import { LIFE_CATEGORIES } from "@/lib/categories";
 import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/json-ld";
@@ -96,7 +97,7 @@ export default async function HomePage({
               className="block border-b border-border py-4 last:border-b-0"
             >
               <span className="text-xs text-muted-foreground">
-                {post.date}
+                {formatPostDate(post.date)}
               </span>
               <div className="mt-1 flex items-center gap-2">
                 <h3 className="text-sm font-semibold leading-snug hover:underline">
@@ -134,7 +135,7 @@ export default async function HomePage({
                 )}
               </div>
               <span className="text-xs text-muted-foreground">
-                {post.date}
+                {formatPostDate(post.date)}
               </span>
             </Link>
           ))}

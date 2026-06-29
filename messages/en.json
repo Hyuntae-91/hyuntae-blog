@@ -24,7 +24,7 @@
   "post": {
     "original": "Original",
     "available": "Available",
-    "comingSoon": "Coming soon",
+    "comingSoon": "Coming Soon",
     "minRead": "min read",
     "contents": "Contents",
     "relatedPosts": "Related Posts",
@@ -55,6 +55,6 @@
   "translationStatus": {
     "original": "Original: {lang}",
     "available": "{lang}",
-    "comingSoon": "{lang} coming soon"
+    "comingSoon": "{lang} Coming Soon"
   }
 }

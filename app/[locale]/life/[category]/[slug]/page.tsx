@@ -7,10 +7,11 @@ import rehypeSlug from "rehype-slug";
 import { remarkMermaid } from "@/lib/remark-mermaid";
 import { extractToc } from "@/lib/toc";
 import { hasLocale, getDictionary, type Locale, locales } from "@/lib/i18n";
-import { getPost, getLifePosts } from "@/lib/posts";
+import { getPost, getLifePosts, getPostSummary } from "@/lib/posts";
 import { rankRelatedPosts } from "@/lib/related-posts";
 import { getCategory, isLifeCategory } from "@/lib/categories";
 import { TranslationPendingModal } from "@/components/translation-pending-modal";
+import { ComingSoonView } from "@/components/coming-soon-view";
 import { mdxComponents } from "@/components/mdx-components";
 import { PostView } from "@/components/post-view";
 import { JsonLd } from "@/components/json-ld";
@@ -33,11 +34,16 @@ export async function generateMetadata({
   const { locale, category, slug } = await params;
   if (!hasLocale(locale) || !isLifeCategory(category)) return {};
 
+  const summary = getPostSummary(slug, locale, "life");
+  if (!summary) return {};
+  // 공개 전(Coming Soon) 글은 검색엔진에 색인되지 않도록 noindex.
+  if (summary.isDraft) {
+    return { title: summary.title, robots: { index: false, follow: false } };
+  }
+
   const post = await getPost(slug, locale, "life");
   if (!post) {
-    const fallback = getLifePosts(locale).find((p) => p.slug === slug);
-    if (!fallback) return {};
-    return { title: fallback.title };
+    return { title: summary.title };
   }
 
   const { meta } = post;
@@ -86,13 +92,26 @@ export default async function LifePostPage({
   const { locale, category, slug } = await params;
   if (!hasLocale(locale) || !isLifeCategory(category)) notFound();
 
+  const summary = getPostSummary(slug, locale, "life");
+
+  // 실존하지 않는 슬러그 → 진짜 404.
+  if (!summary) notFound();
+
+  // 의도적으로 건 링크지만 아직 공개 전 → 404 대신 Coming Soon 안내.
+  if (summary.isDraft) {
+    return (
+      <ComingSoonView
+        locale={locale}
+        title={summary.title}
+        backHref={`/${locale}/life/${category}`}
+      />
+    );
+  }
+
   const post = await getPost(slug, locale, "life");
 
-  // 이 슬러그에 대한 콘텐츠가 (ko조차) 없으면 404.
+  // 공개된 글이지만 이 언어 번역이 아직 없음 → 원문으로 유도.
   if (!post) {
-    const summary = getLifePosts(locale).find((item) => item.slug === slug);
-    if (!summary) notFound();
-    // 번역 준비 중 → 원본 언어의 취미 글로 유도.
     return (
       <TranslationPendingModal
         locale={locale}

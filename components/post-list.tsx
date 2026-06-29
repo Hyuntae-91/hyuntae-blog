@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { type PostMeta } from "@/lib/posts";
+import { formatPostDate } from "@/lib/date";
 
 interface PostListProps {
   posts: PostMeta[];
@@ -59,7 +60,7 @@ export function PostList({
                 <span>{views.toLocaleString()}</span>
               </span>
               <span className="text-muted-foreground/30">|</span>
-              <span>{post.date}</span>
+              <span>{formatPostDate(post.date)}</span>
             </div>
           </Link>
         );

@@ -9,6 +9,7 @@ import {
   resolvePostSourceLocale,
 } from "./locale-helpers";
 import type { CategoryGroup } from "./categories";
+import { comparePostsByDateDesc } from "./date";
 
 // 개발(포트폴리오)과 취미(life)는 콘텐츠 트리부터 분리한다.
 // 그룹 인자는 dev를 기본값으로 둬서, 기존 호출부(홈·블로그·RSS·llms·sitemap)는
@@ -30,6 +31,9 @@ export interface PostMeta {
   sourceLocale: Locale;
   hrefLocale: Locale;
   isTranslationAvailable: boolean;
+  // 내가 의도적으로 링크를 걸었지만 아직 공개 전인 글(frontmatter `draft: true`).
+  // 목록·사이트맵·RSS에서는 숨기되, 상세 URL은 404 대신 "Coming Soon"을 띄운다.
+  isDraft: boolean;
   group: CategoryGroup;
 }
 
@@ -90,6 +94,57 @@ function resolveOriginalLocale(
   return firstAvailableLocale;
 }
 
+// 단일 슬러그의 메타데이터를 만든다. draft 여부와 무관하게 항상 반환하므로,
+// 목록(draft 제외)과 상세 라우트(draft면 Coming Soon)에서 함께 재사용한다.
+// mdx 파일이 하나도 없으면(=실존하지 않는 슬러그) null.
+function buildPostMeta(
+  group: CategoryGroup,
+  slug: string,
+  locale: Locale
+): PostMeta | null {
+  const localeFiles = getLocaleFileMap(group, slug);
+  const availableLocales = getAvailableLocales(localeFiles);
+  const originalLocale = resolveOriginalLocale(localeFiles);
+
+  if (!originalLocale) return null;
+
+  const sourceLocale = resolvePostSourceLocale({
+    requestedLocale: locale,
+    availableLocales,
+    originalLocale,
+  });
+
+  if (!sourceLocale) return null;
+
+  const target = localeFiles[sourceLocale];
+  if (!target) return null;
+
+  const { data } = readPostFile(target);
+
+  return {
+    slug,
+    title: data.title ?? slug,
+    date: data.date ?? "",
+    originalLang:
+      typeof data.originalLang === "string" && hasLocale(data.originalLang)
+        ? data.originalLang
+        : originalLocale,
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    category: data.category ?? "",
+    description: data.description ?? "",
+    availableLocales,
+    sourceLocale,
+    hrefLocale: resolvePostHrefLocale({
+      requestedLocale: locale,
+      availableLocales,
+      originalLocale,
+    }),
+    isTranslationAvailable: availableLocales.includes(locale),
+    isDraft: data.draft === true,
+    group,
+  };
+}
+
 export function getAllPosts(
   locale: Locale,
   group: CategoryGroup = "dev"
@@ -98,55 +153,20 @@ export function getAllPosts(
   // 전체 결과를 정렬한다. 개인 블로그 규모에서는 괜찮지만, 글 수가 늘어나거나
   // 이 함수를 참조하는 라우트가 많아지면 비용이 커질 수 있다.
   // 추후 메타데이터 캐싱이나 빌드 타임 인덱스 생성을 고려한다.
-  const slugs = getPostDirectories(group);
-  const posts: PostMeta[] = [];
+  return getPostDirectories(group)
+    .map((slug) => buildPostMeta(group, slug, locale))
+    .filter((post): post is PostMeta => post !== null && !post.isDraft)
+    .sort(comparePostsByDateDesc);
+}
 
-  for (const slug of slugs) {
-    const localeFiles = getLocaleFileMap(group, slug);
-    const availableLocales = getAvailableLocales(localeFiles);
-    const originalLocale = resolveOriginalLocale(localeFiles);
-
-    if (!originalLocale) continue;
-
-    const sourceLocale = resolvePostSourceLocale({
-      requestedLocale: locale,
-      availableLocales,
-      originalLocale,
-    });
-
-    if (!sourceLocale) continue;
-
-    const target = localeFiles[sourceLocale];
-    if (!target) continue;
-
-    const { data } = readPostFile(target);
-
-    posts.push({
-      slug,
-      title: data.title ?? slug,
-      date: data.date ?? "",
-      originalLang:
-        typeof data.originalLang === "string" && hasLocale(data.originalLang)
-          ? data.originalLang
-          : originalLocale,
-      tags: Array.isArray(data.tags) ? data.tags : [],
-      category: data.category ?? "",
-      description: data.description ?? "",
-      availableLocales,
-      sourceLocale,
-      hrefLocale: resolvePostHrefLocale({
-        requestedLocale: locale,
-        availableLocales,
-        originalLocale,
-      }),
-      isTranslationAvailable: availableLocales.includes(locale),
-      group,
-    });
-  }
-
-  return posts.sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
+// 상세 라우트 전용: 슬러그 하나의 메타를 draft 포함해 조회한다.
+// null → 실존하지 않는 슬러그(=404), isDraft=true → 공개 전(=Coming Soon).
+export function getPostSummary(
+  slug: string,
+  locale: Locale,
+  group: CategoryGroup = "dev"
+): PostMeta | null {
+  return buildPostMeta(group, slug, locale);
 }
 
 export async function getPost(

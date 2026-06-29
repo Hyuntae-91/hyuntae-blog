@@ -24,7 +24,7 @@
   "post": {
     "original": "원본",
     "available": "번역 있음",
-    "comingSoon": "준비 중",
+    "comingSoon": "Coming Soon",
     "minRead": "분 읽기",
     "contents": "목차",
     "relatedPosts": "관련 글",
@@ -55,6 +55,6 @@
   "translationStatus": {
     "original": "원본: {lang}",
     "available": "{lang}",
-    "comingSoon": "{lang} 준비 중"
+    "comingSoon": "{lang} Coming Soon"
   }
 }

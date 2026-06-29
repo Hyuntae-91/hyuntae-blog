@@ -16,6 +16,7 @@ function makePost(overrides: Partial<PostMeta>): PostMeta {
     sourceLocale: "ko",
     hrefLocale: "ko",
     isTranslationAvailable: true,
+    isDraft: false,
     group: "dev",
     ...overrides,
   };

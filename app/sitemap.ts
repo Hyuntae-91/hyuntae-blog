@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
 import { locales } from "@/lib/i18n";
-import { getAllSlugs, getLifePosts } from "@/lib/posts";
+import { getAllPosts, getLifePosts } from "@/lib/posts";
 import { LIFE_CATEGORY_IDS, isLifeCategory } from "@/lib/categories";
 import { SITE_URL } from "@/lib/constants";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const slugs = getAllSlugs();
+  // getAllPosts는 공개 전(draft) 글을 제외하므로, Coming Soon 글은 색인에서 빠진다.
+  const slugs = getAllPosts("ko").map((post) => post.slug);
   // 취미 글 목록(슬러그·카테고리). 색인 노출용이라 한 로케일 기준으로 한 번만 읽는다.
   const lifePosts = getLifePosts("ko").filter((post) =>
     isLifeCategory(post.category)
