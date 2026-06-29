@@ -1,0 +1,18 @@
+---
+title: "AI에 코딩을 맡기기 시작한 뒤로 ③ — AI 서버가 죽으면 나도 바보가 된다"
+date: "2026-06-30T21:00:00+09:00"
+originalLang: ko
+draft: true
+tags: ["AI", "LocalLLM", "Gemma", "Ollama", "AI적응기"]
+category: "AI"
+description: "토큰을 아끼려 시작한 로컬 LLM 실험이 AI 의존이라는 질문과 만났다. 12GB GPU의 컨텍스트 한계, 첫 응답 60초, KV 캐시와 부하분산의 택일, 12B와 26B의 택일, 그리고 'Claude가 죽으면 나는 어떻게 되나'라는 두려움까지 — 의존을 줄이려는 실험과 그 한계의 기록."
+---
+
+> **AI 적응기 (4부작)**
+> 1. [여러 도구를 써보고, 결국 직접 만들기까지](/ko/blog/ai-adoption-journey-1-tools)
+> 2. [AI와 '일하는' 시스템 — 엔지니어링과 검증 오너십](/ko/blog/ai-adoption-journey-2-engineering)
+> 3. **AI 서버가 죽으면 나도 바보가 된다 — 로컬 LLM과 AI 의존** ← 지금 읽는 글
+> 4. [AI를 쫓아가며, AI와 함께 — 배움의 방식까지 바뀌다](/ko/blog/ai-adoption-journey-4-learning)
+
+[2편](/ko/blog/ai-adoption-journey-2-engineering) 끝에서 말했듯, 'AI가 나를 대체할까'라는 두려움이 가라앉은 자리에 다른 두려움이 자랐다. **AI가 멈추면 나도 같이 멈추는 것 아닌가** 하는, 의존에 대한 불안이다. 이 편은 그 불안을 줄여보려 로컬 LLM까지 굴려본 실험의 기록이다. 결론부터 말하면, 로컬 LLM은 그 의존을 0으로 만들어주는 도구가 아니었다. 다만 그 과정에서, 그동안 그저 갖다 쓰기만 하던 AI를 처음으로 내 손으로 직접 띄우고 만지고 튜닝해봤다. 블랙박스를 열어본 셈이다.
+
