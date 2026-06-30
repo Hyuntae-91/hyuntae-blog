@@ -19,6 +19,10 @@ import {
   buildBreadcrumbSchema,
 } from "@/lib/structured-data";
 import { buildOpenGraph } from "@/lib/og-meta";
+import {
+  buildPendingTranslationMetadata,
+  buildPostLanguageAlternates,
+} from "@/lib/post-metadata";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/constants";
 
@@ -41,8 +45,15 @@ export async function generateMetadata({
   }
 
   const post = await getPost(slug, locale);
+  // 이 로케일 번역이 아직 없는 글(번역 준비 중 모달) → 검색엔진에 색인되지 않게
+  // noindex 처리하고 canonical은 원문 URL로 모은다(상세 근거는 lib/post-metadata).
   if (!post) {
-    return { title: summary.title };
+    return buildPendingTranslationMetadata({
+      baseUrl: SITE_URL,
+      title: summary.title,
+      path: `blog/${slug}`,
+      originalLang: summary.originalLang,
+    });
   }
 
   const { meta } = post;
@@ -61,9 +72,13 @@ export async function generateMetadata({
     }),
     alternates: {
       canonical: `${SITE_URL}/${locale}/blog/${slug}`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${SITE_URL}/${l}/blog/${slug}`])
-      ),
+      // 실제 번역이 있는 로케일만 hreflang으로 노출하고, x-default는 원문으로.
+      languages: buildPostLanguageAlternates({
+        baseUrl: SITE_URL,
+        path: `blog/${slug}`,
+        availableLocales: meta.availableLocales,
+        originalLang: meta.originalLang,
+      }),
       types: {
         "application/rss+xml": `${SITE_URL}/${locale}/feed.xml`,
       },

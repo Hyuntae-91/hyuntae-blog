@@ -20,6 +20,10 @@ import {
   buildBreadcrumbSchema,
 } from "@/lib/structured-data";
 import { buildOpenGraph } from "@/lib/og-meta";
+import {
+  buildPendingTranslationMetadata,
+  buildPostLanguageAlternates,
+} from "@/lib/post-metadata";
 import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/constants";
 
@@ -42,12 +46,18 @@ export async function generateMetadata({
   }
 
   const post = await getPost(slug, locale, "life");
+  const base = `life/${category}/${slug}`;
+  // 번역 준비 중 글 → noindex + canonical을 원문으로(상세 근거는 lib/post-metadata).
   if (!post) {
-    return { title: summary.title };
+    return buildPendingTranslationMetadata({
+      baseUrl: SITE_URL,
+      title: summary.title,
+      path: base,
+      originalLang: summary.originalLang,
+    });
   }
 
   const { meta } = post;
-  const base = `life/${category}/${slug}`;
   return {
     title: meta.title,
     description: meta.description,
@@ -63,9 +73,13 @@ export async function generateMetadata({
     }),
     alternates: {
       canonical: `${SITE_URL}/${locale}/${base}`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${SITE_URL}/${l}/${base}`])
-      ),
+      // 실제 번역이 있는 로케일만 hreflang으로 노출하고, x-default는 원문으로.
+      languages: buildPostLanguageAlternates({
+        baseUrl: SITE_URL,
+        path: base,
+        availableLocales: meta.availableLocales,
+        originalLang: meta.originalLang,
+      }),
     },
   };
 }
