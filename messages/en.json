@@ -14,6 +14,7 @@
     "empty": "No posts yet."
   },
   "home": {
+    "tagline": "Notes from a backend engineer who hunts down bottlenecks by measuring — not guessing.",
     "latestPost": "Latest",
     "allPosts": "All Posts",
     "readMore": "Read more",
@@ -32,7 +33,9 @@
     "categoryLabel": "Category",
     "tagsLabel": "Tags",
     "languagesLabel": "Languages",
-    "viewsLabel": "Views"
+    "viewsLabel": "Views",
+    "ctaTitle": "Enjoyed this post?",
+    "morePosts": "More posts"
   },
   "stats": {
     "todayVisitors": "Today's Visitors",

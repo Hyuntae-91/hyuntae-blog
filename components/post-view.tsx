@@ -8,6 +8,7 @@ import { TableOfContents } from "@/components/toc";
 import type { TocItem } from "@/lib/toc";
 import { locales, type Locale } from "@/lib/locale-helpers";
 import { formatPostDate } from "@/lib/date";
+import { AUTHOR } from "@/lib/constants";
 
 const langNames: Record<string, Record<Locale, string>> = {
   ko: { ko: "한국어", en: "English", ja: "日本語" },
@@ -38,6 +39,7 @@ export interface RelatedPostLink {
 }
 
 export interface PostViewDict {
+  nav: { about: string };
   post: {
     dateLabel: string;
     viewsLabel?: string;
@@ -48,6 +50,8 @@ export interface PostViewDict {
     contents: string;
     original: string;
     available: string;
+    ctaTitle: string;
+    morePosts: string;
   };
 }
 
@@ -66,6 +70,9 @@ interface PostViewProps {
   categoryHref?: string;
   categoryLabel?: string;
   related: RelatedPostLink[];
+  // 글 하단 CTA의 "다른 글 보기" 목적지. 개발은 /blog, 취미는 /life/[category]로
+  // 주입한다. 미지정 시 개발 블로그 목록으로 폴백.
+  morePostsHref?: string;
 }
 
 // 개발·취미 글 상세의 공용 레이아웃. 좌측 메타 사이드바 + 본문 + 우측 목차.
@@ -81,9 +88,15 @@ export function PostView({
   categoryHref,
   categoryLabel,
   related,
+  morePostsHref,
 }: PostViewProps) {
   const viewsLabel = dict.post.viewsLabel ?? "조회수";
   const displayCategory = categoryLabel ?? meta.category;
+  const resolvedMorePostsHref = morePostsHref ?? `/${locale}/blog`;
+  const [githubUrl, linkedinUrl] = AUTHOR.sameAs;
+  // 하단 CTA의 보조 링크(About·외부 프로필) 공통 스타일.
+  const ctaPillClass =
+    "inline-flex items-center rounded-full border border-border bg-background px-4 py-1.5 text-sm text-foreground transition-colors hover:bg-accent";
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -288,6 +301,42 @@ export function PostView({
           {/* MDX Content */}
           <div className="prose prose-neutral max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-pre:bg-transparent prose-pre:p-0">
             {content}
+          </div>
+
+          {/* 글 하단 CTA: 다음 행동을 명확히 — 다른 글 / About / 외부 프로필. */}
+          <div className="mt-12 rounded-2xl border border-border bg-muted/30 p-6">
+            <p className="text-sm font-semibold">{dict.post.ctaTitle}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href={resolvedMorePostsHref}
+                className="inline-flex items-center rounded-full bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+              >
+                {dict.post.morePosts} &rarr;
+              </Link>
+              <Link href={`/${locale}/about`} className={ctaPillClass}>
+                {dict.nav.about}
+              </Link>
+              {githubUrl && (
+                <a
+                  href={githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={ctaPillClass}
+                >
+                  GitHub
+                </a>
+              )}
+              {linkedinUrl && (
+                <a
+                  href={linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={ctaPillClass}
+                >
+                  LinkedIn
+                </a>
+              )}
+            </div>
           </div>
 
           <Separator className="my-10" />

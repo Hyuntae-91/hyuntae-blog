@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Eye } from "lucide-react";
 import { type PostMeta } from "@/lib/posts";
 import { formatPostDate } from "@/lib/date";
 
 interface PostListProps {
   posts: PostMeta[];
-  dict: any;
-  initialViews?: Record<string, number>;
+  // 목록에서 쓰는 사전 키만 좁게 받는다(원문 배지 라벨).
+  dict: { post: { original: string } };
   // 글 URL 빌더. 개발(/blog/[slug])과 취미(/life/[category]/[slug])가 달라 주입한다.
   // 미지정 시 개발 블로그 경로로 폴백한다.
   hrefFor?: (post: PostMeta) => string;
@@ -20,16 +19,15 @@ interface PostListProps {
 export function PostList({
   posts,
   dict,
-  initialViews = {},
   hrefFor,
   categoryLabelFor,
   showCategory = true,
 }: PostListProps) {
-  // 조회수는 서버(ISR)에서 내려준 값을 그대로 사용한다. 클라이언트 재요청 없음 → 깜빡임 없음.
+  // 조회수는 목록에 노출하지 않는다(신생 블로그라 낮은 숫자가 오히려 신뢰를 깎는다).
+  // 대신 글의 한 줄 요약(description)을 보여 클릭 동기를 만든다.
   return (
     <div className="space-y-1">
       {posts.map((post) => {
-        const views = initialViews[post.slug] ?? 0;
         const href = hrefFor
           ? hrefFor(post)
           : `/${post.hrefLocale}/blog/${post.slug}`;
@@ -37,9 +35,9 @@ export function PostList({
           <Link
             key={post.slug}
             href={href}
-            className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg px-3 py-4 transition-colors hover:bg-accent gap-2"
+            className="block rounded-lg px-3 py-4 transition-colors hover:bg-accent"
           >
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               {showCategory && post.category && (
                 <Badge variant="secondary" className="text-xs">
                   {categoryLabelFor
@@ -53,15 +51,15 @@ export function PostList({
                 </Badge>
               )}
               <span className="font-medium text-foreground">{post.title}</span>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-              <span className="inline-flex items-center gap-1">
-                <Eye className="h-3.5 w-3.5 text-muted-foreground/80" />
-                <span>{views.toLocaleString()}</span>
+              <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                {formatPostDate(post.date)}
               </span>
-              <span className="text-muted-foreground/30">|</span>
-              <span>{formatPostDate(post.date)}</span>
             </div>
+            {post.description && (
+              <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                {post.description}
+              </p>
+            )}
           </Link>
         );
       })}

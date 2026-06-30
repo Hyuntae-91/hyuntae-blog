@@ -18,7 +18,6 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   if (!hasLocale(locale)) return {};
-  const dict = await getDictionary(locale);
   return {
     title: { absolute: "hyuntae's blog" },
     openGraph: buildOpenGraph({
@@ -60,6 +59,10 @@ export default async function HomePage({
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <JsonLd data={buildWebSiteSchema(locale as Locale)} />
+      {/* 첫 방문자가 "무슨 사람의 블로그인지" 한 문장으로 파악하도록 상단에 포지셔닝. */}
+      <p className="mb-8 text-sm leading-relaxed text-muted-foreground sm:text-base">
+        {dict.home.tagline}
+      </p>
       {/* Magazine Split: Hero */}
       <div className="flex flex-col gap-8 border-b border-border pb-10 md:flex-row md:gap-12">
         {/* Left: Featured post */}

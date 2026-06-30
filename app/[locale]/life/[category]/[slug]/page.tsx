@@ -224,6 +224,7 @@ export default async function LifePostPage({
         categoryHref={`/${locale}/life/${category}`}
         categoryLabel={categoryLabel}
         related={related}
+        morePostsHref={`/${locale}/life/${category}`}
       />
     </>
   );

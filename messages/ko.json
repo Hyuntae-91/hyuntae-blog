@@ -14,6 +14,7 @@
     "empty": "아직 글이 없습니다."
   },
   "home": {
+    "tagline": "측정 → 가설 → 검증으로 병목을 찾는 백엔드 엔지니어의 기록.",
     "latestPost": "최신 글",
     "allPosts": "전체 글",
     "readMore": "자세히 보기",
@@ -32,7 +33,9 @@
     "categoryLabel": "카테고리",
     "tagsLabel": "태그",
     "languagesLabel": "언어",
-    "viewsLabel": "조회수"
+    "viewsLabel": "조회수",
+    "ctaTitle": "이 글이 도움이 되었다면",
+    "morePosts": "다른 글 보기"
   },
   "stats": {
     "todayVisitors": "오늘 방문자",

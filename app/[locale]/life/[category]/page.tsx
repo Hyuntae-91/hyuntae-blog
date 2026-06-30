@@ -10,12 +10,8 @@ import {
 } from "@/lib/categories";
 import { getLifePostsByCategory } from "@/lib/posts";
 import { PostList } from "@/components/post-list";
-import { supabase } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/constants";
 import { buildOpenGraph } from "@/lib/og-meta";
-
-// 새 취미 글이 올라오면 목록이 갱신되도록 ISR. 조회수도 함께 최신화.
-export const revalidate = 60;
 
 export function generateStaticParams() {
   const params: { locale: string; category: string }[] = [];
@@ -67,17 +63,6 @@ export default async function LifeCategoryPage({
   const def = getCategory(category)!;
   const posts = getLifePostsByCategory(locale, category);
 
-  let initialViews: Record<string, number> = {};
-  if (supabase) {
-    const { data } = await supabase.from("page_views").select("slug, views");
-    if (data) {
-      initialViews = data.reduce<Record<string, number>>((acc, item) => {
-        acc[item.slug] = Number(item.views);
-        return acc;
-      }, {});
-    }
-  }
-
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
       <Link
@@ -96,7 +81,6 @@ export default async function LifeCategoryPage({
         <PostList
           posts={posts}
           dict={dict}
-          initialViews={initialViews}
           showCategory={false}
           hrefFor={(post) => `/${post.hrefLocale}/life/${category}/${post.slug}`}
         />

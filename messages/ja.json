@@ -14,6 +14,7 @@
     "empty": "まだ記事がありません。"
   },
   "home": {
+    "tagline": "計測 → 仮説 → 検証でボトルネックを突き止めるバックエンドエンジニアの記録。",
     "latestPost": "最新記事",
     "allPosts": "全記事",
     "readMore": "詳しく見る",
@@ -32,7 +33,9 @@
     "categoryLabel": "カテゴリ",
     "tagsLabel": "タグ",
     "languagesLabel": "言語",
-    "viewsLabel": "閲覧数"
+    "viewsLabel": "閲覧数",
+    "ctaTitle": "この記事が役に立ったら",
+    "morePosts": "他の記事を見る"
   },
   "stats": {
     "todayVisitors": "今日の訪問者",
