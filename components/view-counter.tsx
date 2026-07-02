@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eye } from "lucide-react";
+import { shouldIncrementView } from "@/lib/view-tracking";
 
 interface ViewCounterProps {
   slug: string;
@@ -18,33 +19,42 @@ export function ViewCounter({
   initialViews = 0,
   className = "",
 }: ViewCounterProps) {
-  const hasIncremented = useRef(false);
+  const [views, setViews] = useState(initialViews);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (!increment || hasIncremented.current) return;
+    if (hasFetched.current) return;
+    hasFetched.current = true;
 
     const storageKey = `viewed_post_${slug}`;
     const lastViewed = localStorage.getItem(storageKey);
     const now = Date.now();
-    const ONE_DAY = 24 * 60 * 60 * 1000; // 24 hours
+    const willIncrement = shouldIncrementView({
+      increment,
+      lastViewedAt: lastViewed ? Number(lastViewed) : null,
+      now,
+    });
 
-    // 같은 글을 24시간 내 다시 보면 카운트하지 않는다.
-    if (lastViewed && now - Number(lastViewed) < ONE_DAY) return;
+    // 조회수를 항상 최신값으로 가져온다(no-store). Turso는 응답이 빨라서
+    // 서버(ISR) 값이 오래돼 있어도 화면 숫자는 방문 즉시 실제 값으로 갱신된다.
+    const request = willIncrement
+      ? fetch(`/api/views/${slug}`, { method: "POST" })
+      : fetch(`/api/views/${slug}`, { cache: "no-store" });
 
-    hasIncremented.current = true;
-
-    // 조회수는 백그라운드에서만 증가시킨다. 화면 숫자는 서버(ISR) 값을 유지해
-    // 본인의 증가분은 다음 재생성 때 반영된다 → 1→4 같은 깜빡임 없음.
-    fetch(`/api/views/${slug}`, { method: "POST" })
-      .then(() => localStorage.setItem(storageKey, String(Date.now())))
-      .catch((err) => console.error("Error incrementing views:", err));
+    request
+      .then((res) => res.json())
+      .then((data: { views: number }) => {
+        setViews(data.views);
+        if (willIncrement) localStorage.setItem(storageKey, String(now));
+      })
+      .catch((err) => console.error("Error fetching view count:", err));
   }, [slug, increment]);
 
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs text-muted-foreground ${className}`}>
       <Eye className="h-3.5 w-3.5 text-muted-foreground/80" />
       <span>
-        {label}: {initialViews.toLocaleString()}
+        {label}: {views.toLocaleString()}
       </span>
     </span>
   );
