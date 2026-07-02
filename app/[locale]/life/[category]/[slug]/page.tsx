@@ -24,7 +24,8 @@ import {
   buildPendingTranslationMetadata,
   buildPostLanguageAlternates,
 } from "@/lib/post-metadata";
-import { supabase } from "@/lib/supabase";
+import { turso } from "@/lib/turso";
+import { getPageViews } from "@/lib/page-views";
 import { SITE_URL } from "@/lib/constants";
 
 // 조회수를 60초마다 백그라운드 재생성(ISR)으로 최신화한다.
@@ -141,17 +142,7 @@ export default async function LifePostPage({
   const categoryDef = getCategory(category);
   const categoryLabel = categoryDef?.label[locale] ?? category;
 
-  let initialViews = 0;
-  if (supabase) {
-    const { data } = await supabase
-      .from("page_views")
-      .select("views")
-      .eq("slug", slug)
-      .single();
-    if (data) {
-      initialViews = Number(data.views);
-    }
-  }
+  const initialViews = turso ? await getPageViews(turso, slug) : 0;
 
   const { content: mdxContent } = await compileMDX({
     source: content,

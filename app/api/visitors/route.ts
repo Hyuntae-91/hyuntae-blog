@@ -1,30 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { turso } from "@/lib/turso";
+import { logVisitor, getVisitorStats } from "@/lib/visitor-stats";
 import crypto from "crypto";
 
 export async function GET(request: NextRequest) {
-  if (!supabase) {
+  if (!turso) {
     return NextResponse.json({ today: 0, total: 0 }, { status: 200 });
   }
 
-  const { data, error } = await supabase.rpc("get_visitor_stats");
+  const todayDate = new Date().toISOString().split("T")[0];
 
-  if (error || !data || data.length === 0) {
+  try {
+    const stats = await getVisitorStats(turso, todayDate);
+    return NextResponse.json(stats, { status: 200 });
+  } catch (error) {
     console.error("Failed to fetch visitor stats:", error);
     return NextResponse.json({ today: 0, total: 0 }, { status: 200 });
   }
-
-  return NextResponse.json(
-    {
-      today: Number(data[0].today_count),
-      total: Number(data[0].total_count),
-    },
-    { status: 200 }
-  );
 }
 
 export async function POST(request: NextRequest) {
-  if (!supabase) {
+  if (!turso) {
     return NextResponse.json({ success: false, today: 0, total: 0 }, { status: 200 });
   }
 
@@ -42,33 +38,23 @@ export async function POST(request: NextRequest) {
   const salt = process.env.IP_SALT || "default-site-salt-secret";
   const ipHash = crypto.createHash("sha256").update(ip + salt).digest("hex");
 
-  // Get current date in UTC (matching Supabase's default behavior)
+  // Get current date in UTC
   const todayDate = new Date().toISOString().split("T")[0];
 
   // Try to insert a record for this unique IP hash on this date.
-  // The primary key constraint prevents duplicate counting per day.
-  const { error } = await supabase
-    .from("site_visitors")
-    .insert({ date: todayDate, ip_hash: ipHash, country: country });
-
-  // Code '23505' indicates duplicate key (IP already registered today), which we safely ignore
-  if (error && error.code !== "23505") {
+  // ON CONFLICT DO NOTHING (in logVisitor) prevents duplicate counting per day.
+  try {
+    await logVisitor(turso, { date: todayDate, ipHash, country });
+  } catch (error) {
     console.error("Failed to log visitor session:", error);
   }
 
   // Fetch updated stats to return to the client
-  const { data: stats, error: statsError } = await supabase.rpc("get_visitor_stats");
-
-  if (statsError || !stats || stats.length === 0) {
+  try {
+    const stats = await getVisitorStats(turso, todayDate);
+    return NextResponse.json({ success: true, ...stats }, { status: 200 });
+  } catch (error) {
+    console.error("Failed to fetch visitor stats:", error);
     return NextResponse.json({ success: true, today: 0, total: 0 }, { status: 200 });
   }
-
-  return NextResponse.json(
-    {
-      success: true,
-      today: Number(stats[0].today_count),
-      total: Number(stats[0].total_count),
-    },
-    { status: 200 }
-  );
 }
