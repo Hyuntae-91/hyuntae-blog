@@ -27,7 +27,9 @@ import { turso } from "@/lib/turso";
 import { getPageViews } from "@/lib/page-views";
 import { SITE_URL } from "@/lib/constants";
 
-// 조회수를 빌드 타임에 박제하지 않고, 60초마다 백그라운드 재생성(ISR)으로 최신화한다.
+// 본문(마크다운 컴파일 등)이 빌드 타임에 박제되지 않도록 60초마다 백그라운드
+// 재생성(ISR)한다. 조회수 자체는 이 주기와 무관하게 view-counter.tsx가
+// 클라이언트에서 매번 Turso를 직접 fetch해 표시한다.
 export const revalidate = 60;
 
 export async function generateMetadata({
