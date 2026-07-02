@@ -45,3 +45,6 @@ next-env.d.ts
 
 # local notes
 TODO.md
+
+# claude code worktree state (harness-internal, not project config)
+.claude/worktrees/
