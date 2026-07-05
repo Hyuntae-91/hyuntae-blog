@@ -48,6 +48,7 @@ TODO.md
 CLAUDE.md
 posting_rule.md
 post-template.mdx
+blog-topic-backlog.md
 
 # claude code worktree state (harness-internal, not project config)
 .claude/worktrees/
