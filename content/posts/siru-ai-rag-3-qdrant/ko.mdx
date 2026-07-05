@@ -1,0 +1,39 @@
+---
+title: "사내 RAG 챗봇 성능 개선기 ③ — 벡터DB 교체기, Chroma 대신 Qdrant를 고른 이유"
+date: "2026-07-18T21:00:00+09:00"
+originalLang: ko
+tags: ["RAG", "Qdrant", "벡터DB", "마이그레이션", "AI"]
+category: "AI"
+description: "TODO: 요약 작성 — Chroma에서 Qdrant로 옮기며 비교한 기준과 마이그레이션 과정."
+draft: true
+---
+
+{/*
+  작성 시 참고할 결정사항 (2026-07 세션에서 확정):
+  - 보안 취약점(0.0.0.0 바인딩)과 Critical 버그 2건은 이 글에서 다루지 않는다.
+  - Opus/Codex 교차 검토를 받았다는 내용은 넣지 않는다(포트폴리오 패턴 조사 결과 흔치 않은 디테일이라 제외 결정).
+  - 사내 시스템명(cstool 등)은 일반화, 짐싸/시루AI는 공개 가능.
+  - 회사 고유 데이터·수치가 들어간 스크린샷은 모자이크 처리.
+*/}
+
+> **사내 RAG 챗봇 성능 개선기 (3부작)**
+> 1. [긴 문서를 어떻게 잘라야 검색이 잘 될까 — 청킹 전략 3차 재설계](/ko/blog/siru-ai-rag-1-chunking)
+> 2. [유사도 0.72 vs 임계값 0.75 — RAG가 아는 답을 못 찾을 때](/ko/blog/siru-ai-rag-2-reranking)
+> 3. **벡터DB 교체기 — Chroma 대신 Qdrant를 고른 이유** ← 지금 읽는 글
+
+<figure className="text-center">
+  <img src="/images/posts/siru-ai-rag-3-qdrant/siru-ai-mascot-avatar.png" alt="시루AI 마스코트" className="mx-auto" />
+  <figcaption>한창 개발 중인 시루AI를 '뚝딱이는' 모습으로 표현한 이미지다.</figcaption>
+</figure>
+
+TODO: 도입 — 왜 벡터DB를 바꾸게 됐는지 한 문장으로.
+
+## 1. TODO: Chroma로 시작한 이유와 한계
+
+## 2. TODO: Qdrant를 고려하게 된 계기
+
+## 3. TODO: 마이그레이션 과정
+
+## 4. TODO: 결과와 교훈
+
+TODO: 시리즈 마무리 문단.
