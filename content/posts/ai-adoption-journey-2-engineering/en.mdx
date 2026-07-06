@@ -1,0 +1,87 @@
+---
+title: "Since I Started Letting AI Code ② — The System AI 'Works' In: Engineering and Verification Ownership"
+date: "2026-06-29T21:00:00+09:00"
+originalLang: ko
+tags: ["AI", "Claude Code", "TDD", "Developer Productivity", "AI Adoption Journey"]
+category: "AI"
+description: "Using AI and having a system that actually 'works with' it are two different things — a record of building memory, verification, and isolation into my workflow, then confronting the paradox of a productivity explosion."
+---
+
+> **AI Adoption Journey (a 4-part series)**
+> 1. [Trying Every Tool Until I Built My Own](/en/blog/ai-adoption-journey-1-tools)
+> 2. **The System AI 'Works' In — Engineering and Verification Ownership** ← you are here
+> 3. [When the AI Server Goes Down, I Turn Into an Idiot Too — Local LLMs and AI Dependence](/en/blog/ai-adoption-journey-3-local-llm)
+> 4. [Chasing AI, Alongside AI — Even How I Learn Has Changed](/en/blog/ai-adoption-journey-4-learning)
+
+If [Part 1](/en/blog/ai-adoption-journey-1-tools) was about 'what' I use, this post is about 'how' I work. Honestly, while I was bouncing between tools, what changed more than the tools themselves was **my own way of working**. *Using* AI and *having a system that works with* AI are entirely different things. Getting to the latter took more than one smart model — it took memory, verification, and isolation built around that model.
+
+## The First Thing to Change Was 'How I Remember'
+
+The first illusion that collapsed once I started working with AI was this: *"Just keep working together, and the knowledge will pile up on its own."*
+
+In early March, I came across Andrej Karpathy's Obsidian-based LLM wiki setup and installed Obsidian myself. From that day on, I started logging every work session into it. The structure has two layers.
+
+- **Memory (short — summaries and pointers only)** — this is RAM, in computer terms. It holds only the essentials I need to pull up fast.
+- **Obsidian wiki (the detailed source)** — this is the SSD. It holds the long version: the reasoning behind a decision, the full story of a debugging session, the context around a failure.
+
+At first, I assumed that once session logs piled up in Obsidian, turning them into wiki pages would just happen on its own. That was wishful thinking. I didn't realize it wasn't automatic until June — by then, **2,500** raw session logs had simply piled up in Obsidian, untouched. Over that whole stretch, only the handful I'd explicitly asked to have written up, or that the AI happened to suggest on its own, ever made it into the wiki. Everything else stayed buried in the raw pile. So the next time I ran into the same problem, I was debugging it again from scratch.
+
+So starting in June, I put the wiki conversion on a background cron job. It works through the backlog session by session, pulling out only what's worth keeping. It isn't free, though — working back through 2,500 backlogged sessions means tokens are still burning steadily, even now.
+
+The reason is straightforward. An LLM's context is highly volatile. Even a conclusion I worked hard to reach in one session evaporates the moment I close the window. Trusting the model to remember on its own is wishful thinking — **the real fix was covering that volatility with external memory.** I honestly haven't fully proven what effect the wiki has. But I keep building it on the belief that a well-organized record of my own will genuinely help AI find context and make better calls. (This wiki, incidentally, is the exact knowledge base the `prefill` skill from [Part 1](/en/blog/ai-adoption-journey-1-tools) draws on.)
+
+## Verification: 'Procedure,' Not 'Trust'
+
+The 'habit of doubt' I mentioned in [Part 1](/en/blog/ai-adoption-journey-1-tools) hardened into a handful of concrete procedures over time. Not because I trust AI's output — quite the opposite: **I built verification into the workflow precisely so I wouldn't have to trust it.**
+
+### Golden Tests Guarantee Identical Behavior
+
+The scariest thing in a large-scale refactor or port is code that looks like it runs the same but has quietly changed underneath. So before I touch anything, I lock down the current behavior with tests that check **only the boundary between input and output** — I deliberately don't look at the internal logic. It's a technique commonly used in legacy refactoring known as a [characterization test](https://en.wikipedia.org/wiki/Characterization_test) — or golden master test, in the family Michael Feathers popularized.
+
+The principle is simple: freeze whatever the code currently outputs as the "golden" answer. Right or wrong, you nail down the current behavior as the baseline. Because it checks only input and output rather than internal implementation, this test survives even when a refactor guts the internals completely.
+
+This safety net really shines when working with AI. Get it passing (GREEN) once before the refactor, and if it's **still GREEN after AI moves or rewrites the code, the input and output match — meaning behavior was preserved.** This is exactly the stage where I catch cases where AI's plausible-looking rewrite quietly changed the behavior underneath.
+
+### Before Shipping, I Turn AI Into an Attacker
+
+Right before something goes to production, I flip AI's role. *"Break this code. Find out why it's wrong."* I keep the AI that builds things separate from the AI that tries to break them. This adversarial pre-review works precisely because it sets the default to 'doubt.' Read code with the instinct to disprove it, instead of the instinct to defend it, and you start seeing bugs where the tests pass but the meaning is inverted. In fact, this is exactly the stage where I once caught **a bug where a single boolean's meaning was flipped to its exact opposite** — the value was populated and the tests were green, but what that value actually meant was backwards. Something completely invisible from a builder's viewpoint was obvious from a breaker's.
+
+### Every Task Gets Isolated in Its Own Worktree
+
+I isolate every feature-level task in its own `git worktree`. Two reasons. One: when AI runs several tasks in parallel, this keeps them from stepping on each other's changes. Two: it makes it **easy to throw away a failed experiment wholesale.** Handing work off to AI naturally drives up the sheer number of experiments you try. Plenty of them are doomed to be discarded, and without isolation, throwing them away gets expensive. Creating a worktree costs a bit of disk space and setup time, but the peace of mind — "even if one experiment blows up, main stays clean" — is worth every bit of that cost.
+
+### Enforcing TDD the Classicist Way
+
+This one fights AI's default instincts. Tell an LLM to just write tests, and it leans hard toward a **Mockist (the London school) bias**. It mocks out every collaborating object and writes tests that check "how many times was this method called." Tests like that cling to implementation details and break in droves the moment you refactor. Because they verify call counts instead of behavior, they can even pass while the actual behavior is wrong.
+
+This tilt isn't an accident. Tests like that are common in the training data, and the heuristic "isolate the unit under test" gets applied way too aggressively. So I decided to enforce Kent Beck's **Classicist (the Chicago school) TDD** on the agents — write a failing test first, then verify *behavior and output* with real collaborating objects instead of mocks. I combined public rule sets like [`ai-testing-rules`](https://github.com/Atipico1/ai-testing-rules) with Kent Beck's own published TDD philosophy, refined the result into our team's rules, and rolled it out. Mocks are reserved strictly for the system's boundaries — network, database, filesystem, clock, randomness — never for hiding internal implementation.
+
+### Splitting Up Large Investigations
+
+I don't hand a large investigation to a single session. Instead, I split it into pieces across multiple subagents, each with its own independent context, and just collect the results afterward. When one agent has to hold all the context at once, its judgment actually gets worse — the longer the context runs, the more the key point gets diluted. **Decomposition is what produces accuracy.** (As a side note, the research behind this very series was also farmed out to a dedicated subagent and gathered afterward. More on that meta-story in [Part 4](/en/blog/ai-adoption-journey-4-learning).)
+
+## The Productivity Explosion Paradox — Work Didn't Shrink, It Exploded
+
+It was mid-May. Around then, the fear that "AI is going to replace us" started to fade. The reason was simple: AI took over the backlog we'd never been able to clear, and our development speed shot through the roof. Features leadership had been waiting on started shipping at a terrifying pace.
+
+But what filled the space where that fear used to be wasn't slack time — it was **more work.** As speed went up, the workload didn't shrink; it exploded. A post I happened to read around this time nailed exactly what I was going through.
+
+![A Threads post: "Wait, didn't they say AI was going to lay off all the developers? / Why hasn't it — there's so damn much work / Productivity goes up 100x / so the work that needs doing goes up 100x too / I've got more than 20 terminal tabs open and running / even I, with ADHD, feel like my brain's about to explode"](/images/posts/ai-adoption-journey-2-engineering/threads-productivity-100x.jpg)
+
+*— A Threads post. "Productivity goes up 100x, so the work that needs doing goes up 100x too." That single line summed up exactly where I was at the time.*
+
+Running several tasks at once left me completely scattered. Context switches came so often that I'd forget what I'd even been working on a moment earlier. The faster AI finished a task, the more tasks I could run in parallel — and the more contexts I had to hold in my head at once. **The productivity bottleneck had shifted from "how fast AI is" to "how well I can context-switch."** The verification procedures and the 2-layer memory setup described above were, honestly, also a defense against this explosion. Since I couldn't hold it all in my head, I handed it off to the system instead.
+
+## As Boundaries Disappeared, the Shape of Who Survives Came Into Focus
+
+Even in the middle of all that chaos, I started to get a vague sense of which direction to head in the age of AI. The clearest sensation was that **boundaries were blurring.** Using AI so heavily, I got to the point where I couldn't tell if I was a developer or a product planner anymore. Of course, the domain of planning and the domain of development still exist separately. But in the space between them, **each individual starts operating like an entire team.**
+
+In the end, whether it's infrastructure or a codebase, the people who know that ground deeply are the ones who get more out of AI. AI is remarkably capable, but it still has real gaps — it over-engineers things (the gstack story from Part 1) on one hand, and ships things riddled with holes (the boolean bug above) on the other. I don't know how far that gap will close in the future. But for now, I suspect two kinds of people will survive: **those who can bridge that gap, and those who can spend tokens strategically.**
+
+Models will keep getting stronger, and for now, developers still hold the infrastructure domain. But looking back at my recent work logs, even that infrastructure was being rapidly taken over by AI running on the CLI. Catching what I'd missed and fixing it, combing through logs to pinpoint a problem — all of it was arriving much faster than I expected.
+
+So the "fear of replacement" settled down, for now. But in its place, an entirely different kind of fear was quietly growing. *Maybe it's not that AI replaces me — maybe it's that without AI, I can't do anything at all.* The next post is about exactly that fear — **AI dependence** — and the story of how far I went, even running local LLMs, trying to cut it down.
+
+---
+
+> **Continue reading:** [③ When the AI Server Goes Down, I Turn Into an Idiot Too — Local LLMs and AI Dependence](/en/blog/ai-adoption-journey-3-local-llm)
