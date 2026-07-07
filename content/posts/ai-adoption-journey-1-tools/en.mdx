@@ -9,9 +9,9 @@ description: "A record of what I learned trying out AI coding tools since Februa
 
 > **AI Adoption Journey (a 4-part series)** — From fear to growth, since I started handing my work over to AI: a record of the path I've walked.
 > 1. **Trying Every Tool Until I Built My Own** ← you are here
-> 2. [The System AI 'Works' In — Engineering and Verification Ownership](/ko/blog/ai-adoption-journey-2-engineering)
-> 3. [When the AI Server Goes Down, I Turn Into an Idiot Too — Local LLMs and AI Dependence](/ko/blog/ai-adoption-journey-3-local-llm)
-> 4. [Chasing AI, Alongside AI — Even How I Learn Has Changed](/ko/blog/ai-adoption-journey-4-learning)
+> 2. [The System AI 'Works' In — Engineering and Verification Ownership](/en/blog/ai-adoption-journey-2-engineering)
+> 3. [When the AI Server Goes Down, I Turn Into an Idiot Too — Local LLMs and AI Dependence](/en/blog/ai-adoption-journey-3-local-llm)
+> 4. [Chasing AI, Alongside AI — Even How I Learn Has Changed](/en/blog/ai-adoption-journey-4-learning)
 
 I've tried a good number of AI coding tools since February 2026 — **Kiro, Cursor, the GPT browser window, Claude Code, using-superpower, gstack, speckit.** These days I run speckit with a `prefill` skill I built myself layered on top.
 
@@ -33,7 +33,7 @@ What I got was Claude Code. I didn't know how to switch models, though, so **eve
 
 What convinced me wasn't the speed itself. Boilerplate, repetitive CRUD, refactors that just followed an existing pattern — the stuff that was pure tedium to type by hand — even Sonnet handled these just fine. Once that clicked, my reason for typing it myself disappeared. What was left wasn't typing. It was judgment.
 
-That's when I decided — **I'd stop writing code myself.** I'd supervise instead. My doubt hadn't gone away, though, so I verified AI's output line by line. Looking back, this "habit of doubt" turned out to be the best decision I made from that point on. (I cover how I turned that verification into an actual system in [Part 2](/ko/blog/ai-adoption-journey-2-engineering).)
+That's when I decided — **I'd stop writing code myself.** I'd supervise instead. My doubt hadn't gone away, though, so I verified AI's output line by line. Looking back, this "habit of doubt" turned out to be the best decision I made from that point on. (I cover how I turned that verification into an actual system in [Part 2](/en/blog/ai-adoption-journey-2-engineering).)
 
 Alongside that, anxiety crept in for the first time. *"If AI is already this good, what happens to my job?"* That fear runs through this entire series. It keeps following me, just changing shape each time.
 
@@ -115,7 +115,7 @@ graph LR
     class B mine;
 ```
 
-*Before* clarify ever throws a question, prefill searches both the codebase and an LLM wiki I'd built myself — an Obsidian-based store of project domain knowledge and policy decisions (more on this in [Part 2](/ko/blog/ai-adoption-journey-2-engineering)) — and **pre-fills whatever the code and the record can already answer** straight into the spec. The core idea is separation: **splitting "questions the code can answer" from "questions only a human can answer," and routing the former to an automatic resolution step.**
+*Before* clarify ever throws a question, prefill searches both the codebase and an LLM wiki I'd built myself — an Obsidian-based store of project domain knowledge and policy decisions (more on this in [Part 2](/en/blog/ai-adoption-journey-2-engineering)) — and **pre-fills whatever the code and the record can already answer** straight into the spec. The core idea is separation: **splitting "questions the code can answer" from "questions only a human can answer," and routing the former to an automatic resolution step.**
 
 Here's how it works. First, it pulls a complete list of every item that shows up in the spec. For each item, it spins up a parallel subagent that cross-references the codebase's service and entity signatures, project rules and DDL, neighboring specs, and prior decisions accumulated in the Obsidian wiki and memory — and looks for an answer. The results land in three buckets: **items confirmed with evidence — file and line number — (Resolved), items that are inferred and need human review (Assumed), and items only a human can genuinely answer (Needs Clarification).** Anything without evidence never gets bumped up to Resolved carelessly. Only that last bucket makes it to clarify.
 
@@ -167,4 +167,4 @@ The next post covers what actually changed more, underneath all this tool-hoppin
 
 ---
 
-> **Continue reading:** [② The System AI 'Works' In — Engineering and Verification Ownership](/ko/blog/ai-adoption-journey-2-engineering)
+> **Continue reading:** [② The System AI 'Works' In — Engineering and Verification Ownership](/en/blog/ai-adoption-journey-2-engineering)

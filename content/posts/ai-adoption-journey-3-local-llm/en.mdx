@@ -1,0 +1,95 @@
+---
+title: "Since I Started Letting AI Code ③ — When the AI Server Goes Down, I Turn Into an Idiot Too"
+date: "2026-06-30T21:00:00+09:00"
+originalLang: ko
+tags: ["AI", "LocalLLM", "Gemma", "Ollama", "AI Adoption Journey"]
+category: "AI"
+description: "A local LLM experiment that started purely to save tokens ended up colliding with the question of AI dependence: the context ceiling of a 12GB GPU, a 60-second first response, the KV-cache-vs-load-balancing tradeoff, the 12B-vs-26B tradeoff, and even the fear of what happens if Claude goes down — a record of the experiment to cut dependence, and where it hit its limits."
+---
+
+> **AI Adoption Journey (a 4-part series)**
+> 1. [Trying Every Tool Until I Built My Own](/en/blog/ai-adoption-journey-1-tools)
+> 2. [The System AI 'Works' In — Engineering and Verification Ownership](/en/blog/ai-adoption-journey-2-engineering)
+> 3. **When the AI Server Goes Down, I Turn Into an Idiot Too — Local LLMs and AI Dependence** ← you are here
+> 4. [Chasing AI, Alongside AI — Even How I Learn Has Changed](/en/blog/ai-adoption-journey-4-learning)
+
+As I said at the end of [Part 2](/en/blog/ai-adoption-journey-2-engineering), once the fear of "will AI replace me" settled down, a different fear grew in its place: the anxiety of dependence — **if AI stops, do I stop too?** This post is a record of the experiment I ran to shrink that anxiety, one that went as far as running local LLMs. The short answer: local LLMs didn't reduce that dependence to zero. But in the process, I got to spin up, touch, and tune AI with my own hands for the first time, instead of just consuming it. I'd finally opened the black box.
+
+## The Real Reason I Built a Local LLM Was 'Tokens'
+
+Let me clear up a misconception first. My first motive for touching local LLMs wasn't some grand "escape from dependence." **It was purely to save tokens.** Behind the productivity explosion I described in [Part 2](/en/blog/ai-adoption-journey-2-engineering) was a less flattering reality: I was burning hundreds of millions of tokens a week and blowing through both my 5-hour and weekly limits. Gemma 4 had just come out, and word was going around that "local model performance is incredible," so a simple calculation followed naturally: if I ran the lightweight work locally, wouldn't I save on tokens?
+
+The heavier question — AI dependence — didn't show up at the start. It caught up with me only after I'd been running the experiment for a while. What began as an effort to save tokens ended up dropping me in front of a very different question: *"is it really okay to lean on AI this much?"*
+
+## My Home Windows PC: The 12GB GPU Wall
+
+I started by setting up a local LLM on my home Windows PC. I installed [Ollama](https://github.com/ollama/ollama) on a GPU with 12GB of memory and loaded a Gemma-family model. I registered it as a background service so it would come up automatically on boot without a login, hooked it up to my Obsidian wiki, and threw a variety of questions at it.
+
+The short answer: **12GB left too little room for context to be much use in practice.** At best, it functioned as a "secretary" that answered my questions by referencing the wiki. It was nowhere close to standing in for a coding agent.
+
+It's worth understanding why 12GB was the bottleneck. GPU memory gets spent twice: once to load the **model weights**, and again on the **KV cache** — the key/value tensors that attention references, accumulating one set per token. The KV cache grows linearly with context length. Even though newer models shrink the KV cache with techniques like GQA (Grouped-Query Attention), a coding agent's long context — in the 32k–64k token range — still burns several GB on the KV cache alone. Whatever memory is left over after loading the weights has to absorb that cost, so the usable context window shrinks dramatically. Coding agents casually eat tens of thousands of tokens just on tool definitions and file context; once the window is that small, the whole thing is a non-starter.
+
+## Moving the Stage to the Office: Tying Together Four Spare MacBooks
+
+Right around the time I confirmed the single-machine wall at home, the company happened to have four MacBooks sitting idle. The idea came up naturally — "let's build a local LLM out of that spare hardware and save some tokens" — and since I already had a bit of experience running one at home, it made sense to build on that. So with me leading the effort, we started putting together an **in-house local agent cluster**, tying together the four MacBooks, the Karpathy-style Obsidian setup from [Part 2](/en/blog/ai-adoption-journey-2-engineering), and syncthing.
+
+But going from one machine to four surfaced an entirely different set of walls that never showed up at home. Here's what we ran into setting up those four machines.
+
+## The Numbers Hurt More Than Expected — a 60-Second First Response, and a Forced Tradeoff
+
+The expectation was that it would run about as well without the cloud. Reality pushed back with numbers.
+
+**The first response was slow.** Prefilling the full tool context — about 22k tokens — on the first message took **about 60 seconds.** That felt endless to hands trained on the cloud's instant replies. Prefill is the stage where the model scans the entire input once to fill the KV cache before emitting its first token; the longer the input and the weaker the hardware, the longer this stage stretches.
+
+This is where I ran into the most painful tradeoff of the whole project. With four machines on hand, the obvious next thought was to spread the load across all of them. But it turned out **I couldn't have both "fast follow-up responses" and "load spread across machines" at the same time.**
+
+- Ollama has a prefix KV cache feature. Reuse the same prefix — say, the same system prompt and tool definitions every time — and it pulls that portion from the cache instead of recomputing prefill. In practice, reusing the same prefix dropped prefill **from about 3.2 seconds to 0.03 seconds.** That's 100x.
+- But spreading the load across four machines by dispatching every call as a fresh session (a stateless dispatcher) kills that prefix cache every single time. In other words, **staying fast means keeping the cache alive, and keeping the cache alive means sticking to one machine.** Distribution and caching collided head-on.
+
+For a while, I leaned toward giving up on distribution. If I dropped the four-way split and let a single machine hold the model and handle requests directly, at least the cache stayed alive. But that left the other three machines idle — a half-measure.
+
+The real fix came from switching engines entirely. Ollama unloaded the model from memory the moment it went idle, and even pinning it with `keep_alive=-1` didn't help — any request loaded with tool definitions still cost about 60 seconds all over again. So **I dropped Ollama and switched to `llama-server` from [llama.cpp](https://github.com/ggml-org/llama.cpp).** As long as the process stays up, it never unloads the model, which killed the problem of the whole cache vanishing on unload.
+
+I rebuilt the distribution logic in the same pass. Instead of scattering every call statelessly across workers, **I had a single gateway assemble the complete prompt — persona, search results, context, all of it — and hand that finished prompt to a worker.** When each worker assembled its own prompt, a single stray line break or extra space was enough to break llama.cpp's prefix-cache matching, which works by finding the longest common prefix. With the gateway acting as the single source of truth and deterministically finishing the prompt every time, the input format stayed consistent, and **I could distribute load across machines while still keeping the cache alive most of the time.** I wired the machines together as workers, with one of them doubling as the gateway, and the "distribution or cache" dilemma finally resolved.
+
+What started as an effort to save a few tokens had me swapping out inference engines, standing up a gateway, and poring over cache behavior.
+
+## A Ceiling on Quality, and Endless Operational Fussing
+
+Raw performance had a ceiling too. I initially assumed the lighter **Gemma 12B** would be enough. Instead, 12B turned out **slower** than 26B. That's because the 26B model we used is a [MoE (Mixture of Experts)](https://en.wikipedia.org/wiki/Mixture_of_experts) model. 26B refers to the total parameter count, but only about 4B of experts actually activate to process any given token — the `a4b` in the model name `26b-a4b` stands for "active 4B." 12B, by contrast, is dense: every token pulls all 12B parameters into the computation. On top of that, token generation is **memory-bandwidth bound** — speed comes down to how much active weight has to be read from memory per token. A 26B-MoE model only needs to read 4B per token, while a 12B-dense model has to pull the full 12B every time, so the 26B model, with its 4B active, ended up faster. **The intuition that "a smaller model is faster" only holds when you're comparing dense models against each other.** (Quantization here was just the tool I used to fit the full 26B into MacBook memory — the actual reason for the speed reversal was the MoE architecture.) I ended up going with **26B**, and quality was better on that side too. That said, complex reasoning and large-scale refactors were still more reliable on the cloud. The original plan — "move light work to local, not everything" — got even narrower once I measured it for real.
+
+On top of that, keeping four MacBooks running identically wasn't a "just leave it on" kind of job. The operational fussing never stopped.
+
+- **Unifying model quant and version.** Even the same model behaves and outputs subtly differently if the quantization method or version varies from machine to machine. Getting consistent output across all four machines meant unifying this first.
+- **Instance reloads (thrashing) caused by mismatched context lengths.** When each request carries a different context setting, the model has to reload, burning time.
+- Small but brutal traps, like **background services failing to pick up shell environment variables.**
+
+## Company-Wide Integration, Stopped Cold by Security
+
+We were at the point of hooking web search into the four-machine cluster, filling out the wiki, and integrating in earnest with our internal collaboration tools. That's where we hit a wall: **security.** No small number of our internal collaboration tools had **credentials sitting around in plain text.** If the local LLM ingested those tools wholesale into its RAG or agent context, there was a real risk that plaintext credentials could leak straight out while answering someone's question, or that an agent could use those tokens to act outside its intended permissions. In the end, the project was shelved for now. An experiment meant to save tokens ended up, ironically, exposing our organization's security hygiene.
+
+That's the whole local LLM story.
+
+## And Then I Ran Head-On Into AI Dependence
+
+Running the experiment brought the original question back, now with a clear shape. Whenever the cloud AI went down, I'd just stop working. It's not that I literally can't code without AI. My efficiency just craters — **to the point where waiting for AI to come back while polishing a prompt felt like a better use of time than typing code out line by line myself.**
+
+And then it hit me, out of nowhere: I was scared. Somewhere along the way, I'd become this dependent.
+
+> *If this tool disappeared, what would happen to me?*
+
+It's not that I hadn't prepared at all. The fallback strategy — switch to another model if one goes down — is an extension of the principle I mentioned in [Part 1](/en/blog/ai-adoption-journey-1-tools): don't hand everything to a single model. While one is down, you use the other. But what if both go down at once? Then I'd need yet another model, which means buying into all three — Claude, Codex (GPT), and Antigravity (Gemini). In other words, even though I mainly use just one of them day to day, I'd be stuck carrying the subscription or API safety-net cost of the other two every month, just in case. That's money poured, month after month, into a safety net I never actually use. And if we're being honest — **what if all three models go down at once?** What could a person even do at that point? Right now, I don't have an answer.
+
+So I kept running into the same feeling: *"when the AI server goes down, I turn into an idiot too."* When I said that out loud, my teammates agreed immediately, and deeply. This wasn't just me being overly sensitive — we were all standing on the same cliff edge.
+
+## So Was Local LLM the Answer? Only Partly
+
+Honestly, only partly. Local LLMs weren't a tool that reduced AI dependence to zero. Cost savings, privacy, and the reassurance of "it still runs even if the connection drops" were all real. But the 60-second first response and the quality ceiling were clear walls.
+
+The more valuable payoff from this experiment was something else entirely. **It pulled AI down from a black box into something I operate and tune with my own hands.** Working directly with KV cache, prefill, quantization, context length — all of it — paradoxically grew my *understanding* of AI, not my *dependence* on it. And I realized something: what actually cuts AI dependence isn't a stronger model — it's the system you build around it. [Part 2](/en/blog/ai-adoption-journey-2-engineering)'s verification procedures and external memory, plus this post's hands-on experience down at the model's foundation. Even if the server goes down, my verification standards, my records, and my understanding of the underlying principles don't go down with it. Building that much is, for now, the "way to cut AI dependence" I've found.
+
+The final post covers how all this change eventually reshaped not just my work but **the way I learn.** And one honest confession, too — about who actually wrote the post you're reading right now.
+
+---
+
+> **Continue reading:** [④ Chasing AI, Alongside AI — Even How I Learn Has Changed](/en/blog/ai-adoption-journey-4-learning)
