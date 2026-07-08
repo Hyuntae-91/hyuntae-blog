@@ -1,12 +1,10 @@
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import { Geist, Geist_Mono, Noto_Sans_JP, Noto_Sans_KR } from "next/font/google";
-import { INTERNAL_TRAFFIC_COOKIE_NAME, shouldLoadAnalytics } from "@/lib/analytics";
 import { getDictionary, hasLocale, locales } from "@/lib/i18n";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { GoogleAnalytics } from "@/components/google-analytics";
 import { getLocaleFontClass, type Locale } from "@/lib/locale-helpers";
 
 const geistSans = Geist({
@@ -48,10 +46,6 @@ export default async function LocaleLayout({
 
   const dict = await getDictionary(locale);
 
-  const cookieStore = await cookies();
-  const isInternalVisitor =
-    cookieStore.get(INTERNAL_TRAFFIC_COOKIE_NAME)?.value === "1";
-
   return (
     <html
       lang={locale}
@@ -59,25 +53,7 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background text-foreground flex flex-col">
-        {shouldLoadAnalytics({
-          gaId: process.env.NEXT_PUBLIC_GA_ID,
-          isInternalVisitor,
-        }) && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
-              `}
-            </Script>
-          </>
-        )}
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         <ThemeProvider>
           <Header locale={locale as Locale} dict={dict} />
           <main className="flex-grow">{children}</main>
