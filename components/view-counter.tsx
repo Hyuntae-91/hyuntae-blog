@@ -38,7 +38,7 @@ export function ViewCounter({
     // 조회수를 항상 최신값으로 가져온다(no-store). Turso는 응답이 빨라서
     // 서버(ISR) 값이 오래돼 있어도 화면 숫자는 방문 즉시 실제 값으로 갱신된다.
     const request = willIncrement
-      ? fetch(`/api/views/${slug}`, { method: "POST" })
+      ? fetch(`/api/views/${slug}`, { method: "POST", cache: "no-store" })
       : fetch(`/api/views/${slug}`, { cache: "no-store" });
 
     request
