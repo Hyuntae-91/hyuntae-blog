@@ -52,3 +52,4 @@ blog-topic-backlog.md
 
 # claude code worktree state (harness-internal, not project config)
 .claude/worktrees/
+.gstack/
