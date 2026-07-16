@@ -23,6 +23,12 @@ export function generateStaticParams() {
   return params;
 }
 
+// 빌드 타임에 생성된 locale×slug 외의 조합은 렌더 없이 404. 이게 없으면 임의
+// slug URL을 무한 생성해 온디맨드 Satori 렌더로 CPU를 계속 태울 수 있다.
+// getAllSlugs()는 draft 글 디렉터리도 포함하므로(목록 필터는 getAllPosts 쪽)
+// 공개 전(Coming Soon) 글의 OG 이미지도 빌드 타임에 정상 생성된다.
+export const dynamicParams = false;
+
 export default async function OgImage({
   params,
 }: {
@@ -95,9 +101,15 @@ export default async function OgImage({
     ),
     {
       ...size,
-      fonts: fontData
-        ? [{ name: "title", data: fontData, weight: 700, style: "normal" }]
-        : [],
+      // fonts: []는 satori가 "No fonts are loaded"를 던져 500이 된다(실측).
+      // 폰트 로드 실패 시 키 자체를 생략해야 @vercel/og 기본 폰트로 폴백된다.
+      ...(fontData
+        ? {
+            fonts: [
+              { name: "title", data: fontData, weight: 700, style: "normal" },
+            ],
+          }
+        : {}),
     }
   );
 }
