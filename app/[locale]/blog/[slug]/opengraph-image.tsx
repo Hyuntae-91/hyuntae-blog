@@ -1,12 +1,27 @@
 import { ImageResponse } from "next/og";
-import { getPost } from "@/lib/posts";
+import { getPost, getAllSlugs } from "@/lib/posts";
 import { SITE_NAME } from "@/lib/constants";
-import { hasLocale } from "@/lib/locale-helpers";
+import { hasLocale, locales } from "@/lib/locale-helpers";
 import { loadOgFont } from "@/lib/og-font";
 
 export const alt = SITE_NAME;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+
+// generateStaticParams가 없으면 이 라우트가 매 요청마다 Satori 렌더링을 돌고
+// CDN 캐시도 안 걸린다(실측: 동일 URL 2연속 호출 모두 x-vercel-cache MISS).
+// 같은 디렉터리 page.tsx의 generateStaticParams와 동일하게 locales × 전체
+// 슬러그 조합을 빌드 타임에 정적 생성한다.
+export function generateStaticParams() {
+  const slugs = getAllSlugs();
+  const params: { locale: string; slug: string }[] = [];
+  for (const locale of locales) {
+    for (const slug of slugs) {
+      params.push({ locale, slug });
+    }
+  }
+  return params;
+}
 
 export default async function OgImage({
   params,
