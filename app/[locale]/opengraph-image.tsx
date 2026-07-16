@@ -1,12 +1,24 @@
 import { ImageResponse } from "next/og";
 import { SITE_NAME } from "@/lib/constants";
 import { loadOgFont } from "@/lib/og-font";
+import { locales } from "@/lib/locale-helpers";
 
 // 홈·About·블로그 목록 등 글 상세가 아닌 [locale] 하위 페이지의 기본 OG 이미지.
 // 글 상세 페이지는 자체 opengraph-image.tsx가 우선 적용된다.
 export const alt = SITE_NAME;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+
+// generateStaticParams가 없으면 이 라우트가 매 요청마다 Satori 렌더링을 돌고
+// CDN 캐시도 안 걸린다(실측: 동일 URL 2연속 호출 모두 x-vercel-cache MISS).
+// locale 3개뿐이라 빌드 타임에 전부 정적 생성한다.
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
+
+// 빌드 타임에 생성된 locale 외의 값은 렌더 없이 404. 이게 없으면 임의 locale
+// URL을 무한 생성해 온디맨드 Satori 렌더로 CPU를 계속 태울 수 있다.
+export const dynamicParams = false;
 
 const TAGLINE: Record<string, string> = {
   ko: "백엔드 개발자 블로그 — OpenSearch · Spring · Python",
@@ -64,9 +76,15 @@ export default async function OgImage({
     ),
     {
       ...size,
-      fonts: fontData
-        ? [{ name: "title", data: fontData, weight: 700, style: "normal" }]
-        : [],
+      // fonts: []는 satori가 "No fonts are loaded"를 던져 500이 된다(실측).
+      // 폰트 로드 실패 시 키 자체를 생략해야 @vercel/og 기본 폰트로 폴백된다.
+      ...(fontData
+        ? {
+            fonts: [
+              { name: "title", data: fontData, weight: 700, style: "normal" },
+            ],
+          }
+        : {}),
     }
   );
 }

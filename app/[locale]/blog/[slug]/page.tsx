@@ -27,10 +27,11 @@ import { turso } from "@/lib/turso";
 import { getPageViews } from "@/lib/page-views";
 import { SITE_URL } from "@/lib/constants";
 
-// 본문(마크다운 컴파일 등)이 빌드 타임에 박제되지 않도록 60초마다 백그라운드
-// 재생성(ISR)한다. 조회수 자체는 이 주기와 무관하게 view-counter.tsx가
-// 클라이언트에서 매번 Turso를 직접 fetch해 표시한다.
-export const revalidate = 60;
+// 조회수는 view-counter.tsx가 클라이언트에서 /api/views/[slug]를 직접
+// fetch해 표시하므로 이 ISR 주기와 무관하고, 본문(MDX+Shiki 컴파일)은 배포
+// 시에만 바뀐다. 예전 60초 주기는 방문(봇 포함)마다 MDX+Shiki 풀 재컴파일을
+// 트리거해 Vercel Fluid Active CPU를 과다 소모시켰다 — 24시간 안전밸브로만 둔다.
+export const revalidate = 86400;
 
 export async function generateMetadata({
   params,
