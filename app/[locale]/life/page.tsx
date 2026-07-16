@@ -9,8 +9,10 @@ import { getLifePosts } from "@/lib/posts";
 import { SITE_URL } from "@/lib/constants";
 import { buildOpenGraph } from "@/lib/og-meta";
 
-// 조회수와 무관하지만, 새 취미 글이 올라오면 카드 글 수가 갱신되도록 ISR.
-export const revalidate = 60;
+// 카드 글 수는 로컬 콘텐츠(getLifePosts)에서 오므로 배포 시에만 바뀐다.
+// 예전 60초 주기는 방문(봇 포함)마다 불필요한 재렌더링을 트리거해 Vercel
+// Fluid Active CPU를 과다 소모시켰다 — 24시간 안전밸브로만 둔다.
+export const revalidate = 86400;
 
 // 카테고리 정의(categories.ts)의 아이콘 이름 → 실제 컴포넌트 매핑.
 const ICONS: Record<string, ComponentType<{ className?: string }>> = {
